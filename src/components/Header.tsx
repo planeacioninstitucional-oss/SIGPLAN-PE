@@ -1,0 +1,167 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { useVigenciaStore } from '@/stores/vigenciaStore'
+import {
+    Bell,
+    ChevronDown,
+    LogOut,
+    Moon,
+    Search,
+    Settings,
+    Sun,
+    User,
+    Menu,
+} from 'lucide-react'
+import { useTheme } from 'next-themes'
+import type { Perfil } from '@/types/database'
+import { toast } from 'sonner'
+
+interface HeaderProps {
+    toggleSidebar: () => void
+    userProfile: Perfil | null
+}
+
+export function Header({ toggleSidebar, userProfile }: HeaderProps) {
+    const router = useRouter()
+    const supabase = createClient()
+    const { theme, setTheme } = useTheme()
+    const { vigenciaActual, setVigenciaActual, setTodasLasVigencias, todasLasVigencias } = useVigenciaStore()
+    const [showUserMenu, setShowUserMenu] = useState(false)
+
+    // Fetch vigencias on mount
+    useEffect(() => {
+        const fetchVigencias = async () => {
+            const { data } = await supabase
+                .from('vigencias')
+                .select('*')
+                .order('anio', { ascending: false })
+
+            if (data) {
+                setTodasLasVigencias(data)
+                // Set default vigencia if not set (current year or latest)
+                if (!vigenciaActual) {
+                    const currentYear = new Date().getFullYear()
+                    const active = data.find(v => v.anio === currentYear) || data[0]
+                    if (active) setVigenciaActual({ id: active.id, anio: active.anio })
+                }
+            }
+        }
+        fetchVigencias()
+    }, [])
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
+        router.push('/login')
+        router.refresh()
+    }
+
+    return (
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-white/5 bg-[hsl(222,47%,5%)]/80 px-6 backdrop-blur-md transition-all">
+            <button onClick={toggleSidebar} className="md:hidden text-slate-400">
+                <Menu className="w-5 h-5" />
+            </button>
+
+            {/* Global Search (Visual only for now) */}
+            <div className="hidden md:flex items-center relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <input
+                    type="text"
+                    placeholder="Buscar instrumento..."
+                    className="w-full pl-9 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-600"
+                />
+            </div>
+
+            <div className="flex-1" />
+
+            {/* Vigencia Selector */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-full border border-white/10">
+                <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Vigencia</span>
+                <select
+                    value={vigenciaActual?.id || ''}
+                    onChange={(e) => {
+                        const selected = todasLasVigencias.find(v => v.id === e.target.value)
+                        if (selected) {
+                            setVigenciaActual({ id: selected.id, anio: selected.anio })
+                            toast.info(`Vigencia cambiada a ${selected.anio}`)
+                        }
+                    }}
+                    className="bg-transparent text-sm font-bold text-blue-400 focus:outline-none cursor-pointer"
+                >
+                    {todasLasVigencias.map(v => (
+                        <option key={v.id} value={v.id} className="bg-slate-900 text-slate-200">
+                            {v.anio}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div className="h-6 w-px bg-white/10 mx-2" />
+
+            {/* Notifications */}
+            <button className="relative text-slate-400 hover:text-white transition-colors">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="text-slate-400 hover:text-white transition-colors"
+            >
+                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 top-1/2 -translate-y-1/2 right-0" />
+                <span className="sr-only">Toggle theme</span>
+            </button>
+
+            {/* User Menu */}
+            <div className="relative">
+                <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-white/5 transition-colors"
+                >
+                    <div className="hidden text-right md:block">
+                        <p className="text-sm font-medium text-slate-200 leading-none">{userProfile?.nombre_completo || 'Usuario'}</p>
+                        <p className="text-xs text-slate-500 mt-1">{userProfile?.dependencias?.nombre || 'Sin Dependencia'}</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold ring-2 ring-white/10">
+                        {userProfile?.nombre_completo?.charAt(0) || 'U'}
+                    </div>
+                </button>
+
+                {showUserMenu && (
+                    <>
+                        <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
+                        <div className="absolute right-0 top-full mt-2 w-56 bg-slate-900 border border-white/10 rounded-xl shadow-2xl p-1 z-20 animate-in slide-in-from-top-2 duration-200">
+                            <div className="p-2 border-b border-white/5 mb-1">
+                                <p className="font-medium text-slate-200">{userProfile?.nombre_completo}</p>
+                                <p className="text-xs text-slate-500 truncate">{userProfile?.email}</p>
+                            </div>
+
+                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-left">
+                                <User className="w-4 h-4" />
+                                Mi Perfil
+                            </button>
+                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors text-left">
+                                <Settings className="w-4 h-4" />
+                                Configuración
+                            </button>
+
+                            <div className="h-px bg-white/5 my-1" />
+
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors text-left"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Cerrar Sesión
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </header>
+    )
+}

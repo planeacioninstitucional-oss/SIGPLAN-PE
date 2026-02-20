@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PGE-INFI: Operative Grid</title>
+    <!-- Tailwind CSS (via CDN for local preview) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        background: 'hsl(222, 47%, 5%)',
+                        primary: 'hsl(218, 85%, 45%)',
+                        slate: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        }
+                    },
+                    fontFamily: {
+                        space: ['Space Grotesk', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: 1, boxShadow: '0 0 20px rgba(17, 89, 212, 0.5)' },
+                            '50%': { opacity: .5, boxShadow: '0 0 10px rgba(17, 89, 212, 0.2)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: hsl(222, 47%, 5%);
+            color: white;
+        }
+
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .grid-bg {
+            background-image: linear-gradient(to right, rgba(128, 128, 128, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen relative overflow-x-hidden flex flex-col">
+
+    <!-- Supabase Config (Mocking Environment) -->
+    <script>
+        // NOTE: In a real build, these come from process.env.
+        // For this standalone HTML preview, we explicitly initialize the client.
+        const SUPABASE_URL = 'https://nmklffdgsybkuxdegzak.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ta2xmZmRnc3lia3V4ZGVnemFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0NjI5MzAsImV4cCI6MjA4NzAzODkzMH0.ZF6GnI1y2stCkivQrGOdgbYqJk2y2Zi_GL30nkrF4XI';
+
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function testConnection() {
+            const statusEl = document.getElementById('db-status');
+            try {
+                statusEl.innerHTML = '<span class="text-yellow-400">Conectando...</span>';
+                const { data, error } = await supabase.from('vigencias').select('count', { count: 'exact', head: true });
+
+                if (error) throw error;
+                statusEl.innerHTML = '<span class="text-green-400 font-bold">● Conectado a Supabase</span>';
+                console.log('Supabase Connection OK');
+            } catch (err) {
+                console.error('Connection failed:', err);
+                statusEl.innerHTML = '<span class="text-red-400 font-bold">● Error de Conexión</span>';
+            }
+        }
+
+        // Run on load
+        window.onload = testConnection;
+    </script>
+
+    <div class="fixed inset-0 grid-bg -z-10"></div>
+    <div
+        class="fixed top-0 left-0 right-0 h-[300px] bg-primary/20 blur-[120px] rounded-full mx-auto w-[60%] -translate-y-1/2 -z-10">
+    </div>
+
+    <!-- Header -->
+    <header class="w-full max-w-7xl mx-auto p-6 flex justify-between items-center z-10s">
+        <div class="flex items-center gap-3">
+            <div
+                class="h-10 w-10 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(17,89,212,0.4)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="text-white">
+                    <rect width="7" height="7" x="3" y="3" rx="1" />
+                    <rect width="7" height="7" x="14" y="3" rx="1" />
+                    <rect width="7" height="7" x="14" y="14" rx="1" />
+                    <rect width="7" height="7" x="3" y="14" rx="1" />
+                </svg>
+            </div>
+            <span class="text-2xl font-bold tracking-tight">PGE-INFI</span>
+        </div>
+        <div id="db-status" class="text-xs font-mono bg-white/5 px-3 py-1 rounded-full border border-white/10">
+            Inicializando...
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col items-center justify-center px-4 text-center mt-10 mb-20">
+
+        <div
+            class="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-8 backdrop-blur-md">
+            <span class="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
+            Sistema de Gestión Estratégica v2.0
+        </div>
+
+        <h1
+            class="text-6xl md:text-8xl font-bold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
+            Operative Grid <br />
+            <span class="text-primary drop-shadow-[0_0_20px_rgba(17,89,212,0.4)]">INFIBAGUÉ</span>
+        </h1>
+
+        <p class="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-10 font-inter">
+            Plataforma centralizada para la planeación, seguimiento y control de instrumentos de gestión.
+            Metas PDD, PIIP, PAM y Alistamiento de Auditoría en tiempo real.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-5 items-center">
+            <!-- Redirect to Real App (localhost:3000) -->
+            <button onclick="window.location.href='http://localhost:3000/login'"
+                class="h-14 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white text-lg font-medium transition-all shadow-[0_0_20px_rgba(17,89,212,0.3)] hover:shadow-[0_0_30px_rgba(17,89,212,0.5)] flex items-center group">
+                Ingresar al Sistema
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="ml-2 group-hover:translate-x-1 transition-transform">
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                </svg>
+            </button>
+            <button
+                class="h-14 px-8 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-lg font-medium transition-all border border-white/10 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="mr-2 text-slate-400">
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <path d="M12 18v-6" />
+                    <path d="m9 15 3 3 3-3" />
+                </svg>
+                Documentación
+            </button>
+        </div>
+
+        <!-- Features -->
+        <div class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl w-full">
+            <div class="p-8 rounded-2xl glass hover:bg-white/[0.05] transition-colors text-left group">
+                <div
+                    class="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-6 text-blue-400 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3v18h18" />
+                        <path d="M18 17V9" />
+                        <path d="M13 17V5" />
+                        <path d="M8 17v-3" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Metas PDD</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Seguimiento detallado al cumplimiento del Plan de
+                    Desarrollo Distrital con indicadores de desempeño.</p>
+            </div>
+            <div class="p-8 rounded-2xl glass hover:bg-white/[0.05] transition-colors text-left group">
+                <div
+                    class="h-12 w-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="7" height="7" x="3" y="3" rx="1" />
+                        <rect width="7" height="7" x="14" y="3" rx="1" />
+                        <rect width="7" height="7" x="14" y="14" rx="1" />
+                        <rect width="7" height="7" x="3" y="14" rx="1" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">PIIP & PAM</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Gestión integral de proyectos de inversión y planes de
+                    acción municipal por dependencias.</p>
+            </div>
+            <div class="p-8 rounded-2xl glass hover:bg-white/[0.05] transition-colors text-left group">
+                <div
+                    class="h-12 w-12 rounded-xl bg-green-500/20 flex items-center justify-center mb-6 text-green-400 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                        <path d="m9 12 2 2 4-4" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Auditoría</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">Matriz de alistamiento y checkpoints de control
+                    interno en tiempo real para entes de control.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="w-full border-t border-white/5 py-8 text-center text-slate-500 text-sm">
+        <p>© 2026 INFIBAGUÉ - Oficina de Planeación. Sistema Integrado de Gestión.</p>
+    </footer>
+
+</body>
+
+</html>
