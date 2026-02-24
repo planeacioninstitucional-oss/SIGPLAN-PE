@@ -4,16 +4,13 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Lock, LayoutGrid, BarChart3, ShieldCheck, Database } from 'lucide-react'
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@/lib/supabase/client'
 
 export default function LandingPage() {
     const [dbStatus, setDbStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
 
     useEffect(() => {
-        const supabase = createBrowserClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const supabase = createClient()
 
         async function checkConnection() {
             try {
@@ -47,7 +44,7 @@ export default function LandingPage() {
                 <div className="flex items-center gap-4">
                     <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
                         <div className={`h-2 w-2 rounded-full ${dbStatus === 'connected' ? 'bg-green-500' :
-                                dbStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'
+                            dbStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'
                             }`} />
                         <span className="text-[10px] font-mono text-slate-400">
                             {dbStatus === 'connected' ? 'DB CONNECTED' :
