@@ -1,11 +1,34 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Lock, LayoutGrid, BarChart3, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Lock, LayoutGrid, BarChart3, ShieldCheck, Database } from 'lucide-react'
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function LandingPage() {
+    const [dbStatus, setDbStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
+
+    useEffect(() => {
+        const supabase = createBrowserClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+
+        async function checkConnection() {
+            try {
+                const { error } = await supabase.from('vigencias').select('count', { count: 'exact', head: true })
+                if (error) throw error
+                setDbStatus('connected')
+            } catch (err) {
+                console.error('Supabase connection failed:', err)
+                setDbStatus('error')
+            }
+        }
+
+        checkConnection()
+    }, [])
+
     return (
         <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
             {/* Background Grid */}
@@ -20,12 +43,25 @@ export default function LandingPage() {
                     </div>
                     <span className="text-xl font-bold tracking-tight text-white font-space">PGE-INFI</span>
                 </div>
-                <Link href="/login">
-                    <Button variant="outline" className="border-primary/50 hover:bg-primary/10 hover:text-primary transition-all">
-                        <Lock className="mr-2 h-4 w-4" />
-                        Acceso Funcionario
-                    </Button>
-                </Link>
+
+                <div className="flex items-center gap-4">
+                    <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                        <div className={`h-2 w-2 rounded-full ${dbStatus === 'connected' ? 'bg-green-500' :
+                                dbStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'
+                            }`} />
+                        <span className="text-[10px] font-mono text-slate-400">
+                            {dbStatus === 'connected' ? 'DB CONNECTED' :
+                                dbStatus === 'error' ? 'DB ERROR' : 'CONNECTING...'}
+                        </span>
+                    </div>
+
+                    <Link href="/login">
+                        <Button variant="outline" className="border-primary/50 hover:bg-primary/10 hover:text-primary transition-all">
+                            <Lock className="mr-2 h-4 w-4" />
+                            Acceso Funcionario
+                        </Button>
+                    </Link>
+                </div>
             </header>
 
             {/* Hero Section */}
@@ -37,7 +73,7 @@ export default function LandingPage() {
                     </div>
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 pb-2">
                         Operative Grid <br />
-                        <span className="text-primary">INFIBAGUÉ</span>
+                        <span className="text-primary drop-shadow-[0_0_20px_rgba(17,89,212,0.4)]">INFIBAGUÉ</span>
                     </h1>
                     <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
                         Plataforma centralizada para la planeación, seguimiento y control de instrumentos de gestión.
@@ -91,3 +127,4 @@ export default function LandingPage() {
         </div>
     )
 }
+
