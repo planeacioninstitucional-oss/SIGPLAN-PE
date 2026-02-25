@@ -19,7 +19,8 @@ import {
     FileCheck,
     Building2,
     Briefcase,
-    History
+    History,
+    FileSpreadsheet
 } from 'lucide-react'
 import type { RolUsuario } from '@/types/database'
 
@@ -112,6 +113,18 @@ const MENU_ITEMS: MenuSection[] = [
                 icon: Users,
                 href: '/admin/usuarios',
                 roles: ['super_admin']
+            },
+            {
+                name: 'Vigencias',
+                icon: Calendar,
+                href: '/admin/vigencias',
+                roles: ['super_admin']
+            },
+            {
+                name: 'Importar Excel',
+                icon: FileSpreadsheet,
+                href: '/admin/importar',
+                roles: ['super_admin', 'equipo_planeacion']
             },
             {
                 name: 'Configuración',
