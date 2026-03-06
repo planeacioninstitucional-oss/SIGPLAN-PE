@@ -14,10 +14,12 @@ import {
     Sun,
     User,
     Menu,
+    ChevronRight
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import type { Perfil } from '@/types/database'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 interface HeaderProps {
     toggleSidebar: () => void
@@ -30,6 +32,26 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
     const { theme, setTheme } = useTheme()
     const { vigenciaActual, setVigenciaActual, setTodasLasVigencias, todasLasVigencias } = useVigenciaStore()
     const [showUserMenu, setShowUserMenu] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
+    const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+    // Example global search results mapping
+    const SEARCH_ROUTES = [
+        { name: 'Mesa de Control / Seguimientos', href: '/seguimientos' },
+        { name: 'Mi Gestión', href: '/mi-gestion' },
+        { name: 'Mis Instrumentos', href: '/mis-instrumentos' },
+        { name: 'Metas PDD', href: '/metas-pdd' },
+        { name: 'Proyectos (PIIP)', href: '/piip' },
+        { name: 'Plan Acción Municipal', href: '/plan-accion-municipal' },
+        { name: 'Alistamiento', href: '/alistamiento' },
+        { name: 'Reportes Gerenciales', href: '/reportes' },
+        { name: 'Administración de Usuarios', href: '/admin/usuarios' },
+        { name: 'Configuración', href: '/admin/configuracion' },
+    ]
+
+    const filteredSearchResults = SEARCH_ROUTES.filter(route =>
+        route.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
 
     // Fetch vigencias on mount
     useEffect(() => {
@@ -64,14 +86,46 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
                 <Menu className="w-5 h-5" />
             </button>
 
-            {/* Global Search (Visual only for now) */}
-            <div className="hidden md:flex items-center relative w-64">
+            {/* Global Search */}
+            <div className="hidden md:flex items-center relative w-64 md:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                     type="text"
-                    placeholder="Buscar instrumento..."
+                    placeholder="Buscar instrumento o módulo..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value)
+                        setIsSearchOpen(true)
+                    }}
+                    onFocus={() => setIsSearchOpen(true)}
+                    onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)} // delay to allow click
                     className="w-full pl-9 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-slate-600"
                 />
+
+                {isSearchOpen && searchQuery.length > 0 && (
+                    <div className="absolute top-full left-0 mt-2 w-full bg-slate-900 border border-white/10 rounded-xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
+                        {filteredSearchResults.length > 0 ? (
+                            <div className="space-y-1">
+                                {filteredSearchResults.slice(0, 5).map(route => (
+                                    <Link
+                                        key={route.href}
+                                        href={route.href}
+                                        onClick={() => {
+                                            setIsSearchOpen(false)
+                                            setSearchQuery('')
+                                        }}
+                                        className="flex items-center justify-between px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-blue-500/20 rounded-md transition-colors"
+                                    >
+                                        {route.name}
+                                        <ChevronRight className="w-4 h-4 text-blue-400" />
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-center text-sm text-slate-500 py-4">No se encontraron resultados.</p>
+                        )}
+                    </div>
+                )}
             </div>
 
             <div className="flex-1" />
@@ -124,7 +178,7 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
                 >
                     <div className="hidden text-right md:block">
                         <p className="text-sm font-medium text-slate-200 leading-none">{userProfile?.nombre_completo || 'Usuario'}</p>
-                        <p className="text-xs text-slate-500 mt-1">{userProfile?.dependencias?.nombre || 'Sin Dependencia'}</p>
+                        <p className="text-xs text-slate-500 mt-1">{(userProfile?.oficinas as any)?.nombre || userProfile?.cargo || 'Sin Dependencia'}</p>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold ring-2 ring-white/10">
                         {userProfile?.nombre_completo?.charAt(0) || 'U'}

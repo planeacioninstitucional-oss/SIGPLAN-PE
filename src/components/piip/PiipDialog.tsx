@@ -25,6 +25,8 @@ interface PiipDialogProps {
     dependenciaId: string
     projectToEdit: Piip | null
     onSuccess: () => void
+    todasDependencias?: Dependencia[]
+    userRole?: string
 }
 
 export function PiipDialog({
@@ -34,6 +36,8 @@ export function PiipDialog({
     dependenciaId,
     projectToEdit,
     onSuccess,
+    todasDependencias = [],
+    userRole = '',
 }: PiipDialogProps) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
@@ -48,6 +52,7 @@ export function PiipDialog({
         estado: 'gris',
         observaciones: '',
         url_soporte: '',
+        dependencia_id: dependenciaId,
     })
     const supabase = createClient()
 
@@ -65,6 +70,7 @@ export function PiipDialog({
                 estado: projectToEdit.estado,
                 observaciones: projectToEdit.observaciones || '',
                 url_soporte: projectToEdit.url_soporte || '',
+                dependencia_id: projectToEdit.dependencia_id || dependenciaId,
             })
         } else {
             setFormData({
@@ -79,16 +85,24 @@ export function PiipDialog({
                 estado: 'gris',
                 observaciones: '',
                 url_soporte: '',
+                dependencia_id: dependenciaId,
             })
         }
-    }, [projectToEdit, open])
+    }, [projectToEdit, open, dependenciaId])
 
     const handleSubmit = async () => {
         setLoading(true)
         try {
+            const targetDependenciaId = ['super_admin', 'equipo_planeacion'].includes(userRole) ? formData.dependencia_id : dependenciaId;
+            if (!targetDependenciaId) {
+                toast.error('Debe seleccionar una dependencia o pertenecer a una')
+                setLoading(false)
+                return
+            }
+
             const payload: any = {
                 vigencia_id: vigenciaId,
-                dependencia_id: dependenciaId,
+                dependencia_id: targetDependenciaId,
                 codigo_proyecto: formData.codigo_proyecto,
                 nombre_proyecto: formData.nombre_proyecto,
                 objetivo: formData.objetivo,
@@ -157,6 +171,22 @@ export function PiipDialog({
                             </Select>
                         </div>
                     </div>
+
+                    {['super_admin', 'equipo_planeacion'].includes(userRole) && (
+                        <div className="grid gap-2">
+                            <Label>Dependencia Asignada</Label>
+                            <select
+                                className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 text-slate-200"
+                                value={formData.dependencia_id}
+                                onChange={e => setFormData({ ...formData, dependencia_id: e.target.value })}
+                            >
+                                <option value="" disabled>Seleccione una dependencia...</option>
+                                {todasDependencias.map(d => (
+                                    <option key={d.id} value={d.id}>{d.nombre}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="grid gap-2">
                         <Label htmlFor="nombre">Nombre del Proyecto *</Label>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useVigenciaStore } from '@/stores/vigenciaStore'
+import { useAuthStore } from '@/stores/authStore'
 import {
     Table,
     TableBody,
@@ -23,9 +24,10 @@ import { SemaforoCell } from '@/components/seguimientos/SemaforoCell'
 export default function PiipPage() {
     const { vigenciaActual } = useVigenciaStore()
     const [loading, setLoading] = useState(true)
-    const [userProfile, setUserProfile] = useState<{ id: string, rol: RolUsuario, dependencia_id: string } | null>(null)
-    const [projects, setProjects] = useState<Piip[]>([])
+    const { userProfile, initialized } = useAuthStore()
+    const [records, setRecords] = useState<Piip[]>([])
     const [dependencia, setDependencia] = useState<Dependencia | null>(null)
+    const [todasDependencias, setTodasDependencias] = useState<Dependencia[]>([])
 
     // Dialog State
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -34,23 +36,11 @@ export default function PiipPage() {
     const supabase = createClient()
 
     useEffect(() => {
-        const init = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-
-            const { data: profile } = await supabase
-                .from('perfiles')
-                .select('*, dependencias(*)')
-                .eq('id', user.id)
-                .single()
-
-            if (profile) {
-                setUserProfile(profile as any)
-                setDependencia(profile.dependencias as any)
-            }
+        if (!initialized) return
+        if (userProfile) {
+            setDependencia((userProfile as any).oficinas as Dependencia)
         }
-        init()
-    }, [])
+    }, [initialized, userProfile])
 
     useEffect(() => {
         if (!vigenciaActual || !userProfile) return
@@ -63,17 +53,20 @@ export default function PiipPage() {
         try {
             let query = supabase
                 .from('piip')
-                .select('*')
+                .select('*, dependencias(nombre)')
                 .eq('vigencia_id', vigenciaActual.id)
 
             // If NOT super admin, filter by my dependency
-            if (userProfile?.rol === 'jefe_oficina' && userProfile.dependencia_id) {
-                query = query.eq('dependencia_id', userProfile.dependencia_id)
+            if (userProfile?.rol === 'jefe_oficina' && (userProfile as any).dependencia_id) {
+                query = query.eq('dependencia_id', (userProfile as any).dependencia_id)
+            } else {
+                const { data: depsData } = await supabase.from('dependencias').select('*').eq('activa', true).order('nombre')
+                if (depsData) setTodasDependencias(depsData)
             }
 
             const { data, error } = await query.order('created_at', { ascending: false })
             if (error) throw error
-            setProjects(data || [])
+            setRecords(data || [])
         } catch (error) {
             toast.error('Error cargando proyectos')
         } finally {
@@ -109,8 +102,8 @@ export default function PiipPage() {
                     <h1 className="text-3xl font-bold text-white">PIIP</h1>
                     <p className="text-slate-400">Plan Indicativo de Inversión Pública</p>
                 </div>
-                {/* Only show Add button if user has a dependency assigned (Jefes) */}
-                {userProfile?.dependencia_id && (
+                {/* Always show for admins, or if user has a dependency assigned (Jefes) */}
+                {(['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '')) && (
                     <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500">
                         <Plus className="w-4 h-4 mr-2" />
                         Nuevo Proyecto
@@ -132,6 +125,9 @@ export default function PiipPage() {
                                 <TableRow>
                                     <TableHead className="text-slate-300">Código</TableHead>
                                     <TableHead className="min-w-[200px] text-slate-300">Nombre del Proyecto</TableHead>
+                                    {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                        <TableHead className="text-slate-300">Oficina</TableHead>
+                                    )}
                                     <TableHead className="text-right text-slate-300">Presupuesto</TableHead>
                                     <TableHead className="text-right text-slate-300">Ejecutado</TableHead>
                                     <TableHead className="text-center text-slate-300">% Fin.</TableHead>
@@ -140,7 +136,7 @@ export default function PiipPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {projects.map((proj) => {
+                                {records.map((proj) => {
                                     const loading = false
                                     const percentFin = proj.presupuesto_asignado && proj.presupuesto_asignado > 0
                                         ? ((proj.presupuesto_ejecutado || 0) / proj.presupuesto_asignado) * 100
@@ -150,6 +146,9 @@ export default function PiipPage() {
                                         <TableRow key={proj.id} className="hover:bg-slate-800/50">
                                             <TableCell className="font-mono text-xs text-slate-400">{proj.codigo_proyecto}</TableCell>
                                             <TableCell className="text-slate-300 font-medium">{proj.nombre_proyecto}</TableCell>
+                                            {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                                <TableCell className="text-slate-400 text-xs">{(proj as any).dependencias?.nombre || '—'}</TableCell>
+                                            )}
                                             <TableCell className="text-right text-slate-300">
                                                 ${proj.presupuesto_asignado?.toLocaleString()}
                                             </TableCell>
@@ -177,9 +176,9 @@ export default function PiipPage() {
                                         </TableRow>
                                     )
                                 })}
-                                {projects.length === 0 && (
+                                {records.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                                        <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                                             No hay proyectos registrados.
                                         </TableCell>
                                     </TableRow>
@@ -190,16 +189,20 @@ export default function PiipPage() {
                 </CardContent>
             </Card>
 
-            {userProfile?.dependencia_id && (
-                <PiipDialog
-                    open={dialogOpen}
-                    onOpenChange={setDialogOpen}
-                    vigenciaId={vigenciaActual.id}
-                    dependenciaId={userProfile.dependencia_id}
-                    projectToEdit={editingProject}
-                    onSuccess={fetchProjects}
-                />
-            )}
-        </div>
+            {
+                (['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '')) && (
+                    <PiipDialog
+                        open={dialogOpen}
+                        onOpenChange={setDialogOpen}
+                        vigenciaId={vigenciaActual.id}
+                        dependenciaId={(userProfile as any)?.dependencia_id || ''}
+                        todasDependencias={todasDependencias}
+                        userRole={userProfile?.rol || ''}
+                        projectToEdit={editingProject}
+                        onSuccess={fetchProjects}
+                    />
+                )
+            }
+        </div >
     )
 }

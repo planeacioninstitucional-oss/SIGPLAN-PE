@@ -1,9 +1,76 @@
-// TypeScript types for PGE-INFI database schema
+// TypeScript types for PGE-INFI database schema — SIGPLAN-PE
+// Reestructurado: Oficinas → Procesos Institucionales
 
-export type RolUsuario = 'super_admin' | 'equipo_planeacion' | 'jefe_oficina' | 'gerente' | 'auditor_externo'
+// ─── Enums / Unions ─────────────────────────────────────────────────────────
+export type RolUsuario =
+    | 'super_admin'
+    | 'jefe_oficina'
+    | 'equipo_planeacion'
+    | 'gerente'
+    | 'auditor'
+
 export type EstadoSemaforo = 'verde' | 'amarillo' | 'rojo' | 'gris'
 export type FrecuenciaInstrumento = 'mensual' | 'trimestral' | 'cuatrimestral' | 'semestral' | 'anual'
 export type EstadoVigencia = 'activa' | 'historica' | 'planificacion'
+
+export const ROL_LABELS: Record<RolUsuario, string> = {
+    super_admin: 'Super Administrador',
+    jefe_oficina: 'Jefe de Oficina/Funcionario',
+    equipo_planeacion: 'Equipo de Planeación',
+    gerente: 'Gerente',
+    auditor: 'Auditor',
+}
+
+// ─── Estructura Institucional ───────────────────────────────────────────────
+
+export interface GrupoProceso {
+    id: string
+    nombre: string
+    orden: number
+    color: string
+    created_at: string
+}
+
+export interface Oficina {
+    id: string
+    nombre: string
+    abreviatura: string | null
+    activa: boolean
+    created_at: string
+}
+
+export interface ProcesoInstitucional {
+    id: string
+    nombre: string
+    grupo_id: string
+    oficina_id: string
+    activo: boolean
+    orden: number
+    created_at: string
+    // Joined
+    grupos_proceso?: GrupoProceso
+    oficinas?: Oficina
+}
+
+// ─── Usuarios ────────────────────────────────────────────────────────────────
+
+export interface Perfil {
+    id: string
+    email: string
+    nombre_completo: string | null
+    cargo: string | null
+    rol: RolUsuario
+    oficina_id: string | null
+    activo: boolean
+    created_at: string
+    updated_at: string
+    // Joined (new schema)
+    oficinas?: Oficina
+    // Legacy join shim — backward compatibility with older pages
+    dependencias?: { nombre: string;[key: string]: any }
+}
+
+// ─── Vigencia ────────────────────────────────────────────────────────────────
 
 export interface Vigencia {
     id: string
@@ -14,13 +81,9 @@ export interface Vigencia {
     updated_at: string
 }
 
-export interface ProcesoMacro {
-    id: string
-    nombre: string
-    orden: number
-    created_at: string
-}
+// ─── Instrumentos / Seguimiento ─────────────────────────────────────────────
 
+/** @deprecated Usar Oficina en lugar de Dependencia */
 export interface Dependencia {
     id: string
     nombre: string
@@ -30,21 +93,6 @@ export interface Dependencia {
     reporte_pdd: boolean
     created_at: string
     updated_at: string
-    // Joined
-    procesos_macro?: ProcesoMacro
-}
-
-export interface Perfil {
-    id: string
-    email: string
-    nombre_completo: string
-    rol: RolUsuario
-    dependencia_id: string | null
-    activo: boolean
-    created_at: string
-    updated_at: string
-    // Joined
-    dependencias?: Dependencia
 }
 
 export interface Instrumento {
@@ -58,12 +106,6 @@ export interface Instrumento {
     requiere_link: boolean
     activo: boolean
     orden: number
-    created_at: string
-}
-
-export interface AsignacionEvaluador {
-    instrumento_id: string
-    perfil_id: string
     created_at: string
 }
 
@@ -181,7 +223,7 @@ export interface MetasPdd {
     dependencias?: Dependencia
 }
 
-// Audit checkpoints
+// ─── Constantes ──────────────────────────────────────────────────────────────
 
 export const CHECKPOINTS = [
     'Actualización Caracterización',
@@ -195,13 +237,3 @@ export const CHECKPOINTS = [
 ] as const
 
 export type Checkpoint = typeof CHECKPOINTS[number]
-
-// Dependencias con acceso a PDD (Módulo B)
-export const DEPENDENCIAS_PDD = [
-    'Gestion estrategica',
-    'Unidad de negocio de panoptico',
-    'Unidad de negocio de bicicletas rueda por ibague',
-    'Transversal alumbrado publico',
-    'Transversal plazas de mercado',
-    'Transversal de parques y zonas verdes',
-] as const

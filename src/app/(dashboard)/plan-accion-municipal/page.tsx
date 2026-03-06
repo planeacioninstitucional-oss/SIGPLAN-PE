@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useVigenciaStore } from '@/stores/vigenciaStore'
+import { useAuthStore } from '@/stores/authStore'
 import {
     Table,
     TableBody,
@@ -22,10 +23,11 @@ import { SemaforoCell } from '@/components/seguimientos/SemaforoCell'
 
 export default function PamPage() {
     const { vigenciaActual } = useVigenciaStore()
+    const { userProfile, initialized } = useAuthStore()
     const [loading, setLoading] = useState(true)
-    const [userProfile, setUserProfile] = useState<{ id: string, rol: RolUsuario, dependencia_id: string } | null>(null)
     const [records, setRecords] = useState<PlanAccionMunicipal[]>([])
     const [dependencia, setDependencia] = useState<Dependencia | null>(null)
+    const [todasDependencias, setTodasDependencias] = useState<Dependencia[]>([])
 
     // Dialog State
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -34,23 +36,11 @@ export default function PamPage() {
     const supabase = createClient()
 
     useEffect(() => {
-        const init = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
-
-            const { data: profile } = await supabase
-                .from('perfiles')
-                .select('*, dependencias(*)')
-                .eq('id', user.id)
-                .single()
-
-            if (profile) {
-                setUserProfile(profile as any)
-                setDependencia(profile.dependencias as any)
-            }
+        if (!initialized) return
+        if (userProfile) {
+            setDependencia((userProfile as any).oficinas as Dependencia)
         }
-        init()
-    }, [])
+    }, [initialized, userProfile])
 
     useEffect(() => {
         if (!vigenciaActual || !userProfile) return
@@ -63,12 +53,15 @@ export default function PamPage() {
         try {
             let query = supabase
                 .from('plan_accion_municipal')
-                .select('*')
+                .select('*, dependencias(nombre)')
                 .eq('vigencia_id', vigenciaActual.id)
 
             // If NOT super admin, filter by my dependency
-            if (userProfile?.rol === 'jefe_oficina' && userProfile.dependencia_id) {
-                query = query.eq('dependencia_id', userProfile.dependencia_id)
+            if (userProfile?.rol === 'jefe_oficina' && (userProfile as any).dependencia_id) {
+                query = query.eq('dependencia_id', (userProfile as any).dependencia_id)
+            } else {
+                const { data: depsData } = await supabase.from('dependencias').select('*').eq('activa', true).order('nombre')
+                if (depsData) setTodasDependencias(depsData)
             }
 
             const { data, error } = await query.order('created_at', { ascending: false })
@@ -109,7 +102,7 @@ export default function PamPage() {
                     <h1 className="text-3xl font-bold text-white">Plan Acción Municipal</h1>
                     <p className="text-slate-400">Seguimiento a metas y ejes estratégicos</p>
                 </div>
-                {userProfile?.dependencia_id && (
+                {(['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '')) && (
                     <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500">
                         <Plus className="w-4 h-4 mr-2" />
                         Nuevo Registro
@@ -131,6 +124,9 @@ export default function PamPage() {
                                 <TableRow>
                                     <TableHead className="text-slate-300">Eje</TableHead>
                                     <TableHead className="min-w-[200px] text-slate-300">Programa / Meta PDD</TableHead>
+                                    {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                        <TableHead className="text-slate-300">Oficina</TableHead>
+                                    )}
                                     <TableHead className="text-right text-slate-300">Meta Vig.</TableHead>
                                     <TableHead className="text-right text-slate-300">Logro</TableHead>
                                     <TableHead className="text-center text-slate-300">% Avance</TableHead>
@@ -151,6 +147,9 @@ export default function PamPage() {
                                                 <div className="font-medium text-blue-400">{rec.programa}</div>
                                                 <div className="text-xs text-slate-500 line-clamp-2">{rec.meta_pdd}</div>
                                             </TableCell>
+                                            {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                                <TableCell className="text-slate-400 text-xs">{(rec as any).dependencias?.nombre || '—'}</TableCell>
+                                            )}
                                             <TableCell className="text-right text-slate-300">
                                                 {rec.meta_vigencia}
                                             </TableCell>
@@ -180,7 +179,7 @@ export default function PamPage() {
                                 })}
                                 {records.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                                        <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                                             No hay registros PAM.
                                         </TableCell>
                                     </TableRow>
@@ -191,16 +190,20 @@ export default function PamPage() {
                 </CardContent>
             </Card>
 
-            {userProfile?.dependencia_id && (
-                <PamDialog
-                    open={dialogOpen}
-                    onOpenChange={setDialogOpen}
-                    vigenciaId={vigenciaActual.id}
-                    dependenciaId={userProfile.dependencia_id}
-                    pamToEdit={editingRecord}
-                    onSuccess={fetchRecords}
-                />
-            )}
-        </div>
+            {
+                (['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '')) && (
+                    <PamDialog
+                        open={dialogOpen}
+                        onOpenChange={setDialogOpen}
+                        vigenciaId={vigenciaActual.id}
+                        dependenciaId={(userProfile as any)?.dependencia_id || ''}
+                        todasDependencias={todasDependencias}
+                        userRole={userProfile?.rol || ''}
+                        pamToEdit={editingRecord}
+                        onSuccess={fetchRecords}
+                    />
+                )
+            }
+        </div >
     )
 }

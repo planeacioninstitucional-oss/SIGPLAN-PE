@@ -14,7 +14,7 @@ export default function LandingPage() {
 
         async function checkConnection() {
             try {
-                const { error } = await supabase.from('vigencias').select('count', { count: 'exact', head: true })
+                const { error } = await supabase.from('oficinas').select('count', { count: 'exact', head: true })
                 if (error) throw error
                 setDbStatus('connected')
             } catch (err) {

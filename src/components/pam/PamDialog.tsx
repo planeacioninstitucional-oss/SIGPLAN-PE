@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
-import type { PlanAccionMunicipal } from '@/types/database'
+import type { PlanAccionMunicipal, Dependencia } from '@/types/database'
 
 interface PamDialogProps {
     open: boolean
@@ -25,6 +25,8 @@ interface PamDialogProps {
     dependenciaId: string
     pamToEdit: PlanAccionMunicipal | null
     onSuccess: () => void
+    todasDependencias?: Dependencia[]
+    userRole?: string
 }
 
 export function PamDialog({
@@ -34,6 +36,8 @@ export function PamDialog({
     dependenciaId,
     pamToEdit,
     onSuccess,
+    todasDependencias = [],
+    userRole = '',
 }: PamDialogProps) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
@@ -50,6 +54,7 @@ export function PamDialog({
         estado: 'gris',
         observaciones: '',
         url_soporte: '',
+        dependencia_id: dependenciaId,
     })
     const supabase = createClient()
 
@@ -69,6 +74,7 @@ export function PamDialog({
                 estado: pamToEdit.estado || 'gris',
                 observaciones: pamToEdit.observaciones || '',
                 url_soporte: pamToEdit.url_soporte || '',
+                dependencia_id: pamToEdit.dependencia_id || dependenciaId,
             })
         } else {
             setFormData({
@@ -85,16 +91,24 @@ export function PamDialog({
                 estado: 'gris',
                 observaciones: '',
                 url_soporte: '',
+                dependencia_id: dependenciaId,
             })
         }
-    }, [pamToEdit, open])
+    }, [pamToEdit, open, dependenciaId])
 
     const handleSubmit = async () => {
         setLoading(true)
         try {
+            const targetDependenciaId = ['super_admin', 'equipo_planeacion'].includes(userRole) ? formData.dependencia_id : dependenciaId;
+            if (!targetDependenciaId) {
+                toast.error('Debe seleccionar una dependencia o pertenecer a una')
+                setLoading(false)
+                return
+            }
+
             const payload: any = {
                 vigencia_id: vigenciaId,
-                dependencia_id: dependenciaId,
+                dependencia_id: targetDependenciaId,
                 eje_estrategico: formData.eje_estrategico,
                 programa: formData.programa,
                 subprograma: formData.subprograma,
@@ -164,6 +178,22 @@ export function PamDialog({
                             </Select>
                         </div>
                     </div>
+
+                    {['super_admin', 'equipo_planeacion'].includes(userRole) && (
+                        <div className="grid gap-2">
+                            <Label>Dependencia Asignada</Label>
+                            <select
+                                className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 text-slate-200"
+                                value={formData.dependencia_id}
+                                onChange={e => setFormData({ ...formData, dependencia_id: e.target.value })}
+                            >
+                                <option value="" disabled>Seleccione una dependencia...</option>
+                                {todasDependencias.map(d => (
+                                    <option key={d.id} value={d.id}>{d.nombre}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="grid gap-2">
                         <Label>Programa</Label>

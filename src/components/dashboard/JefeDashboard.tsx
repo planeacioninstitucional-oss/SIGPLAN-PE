@@ -12,10 +12,10 @@ export function JefeDashboard({ profile }: { profile: Perfil }) {
             <div className="flex justify-between items-end">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-white mb-1 font-space">
-                        Hola, <span className="text-primary">{profile.nombre_completo.split(' ')[0]}</span> 👋
+                        Hola, <span className="text-primary">{profile.nombre_completo?.split(' ')[0] ?? 'Usuario'}</span> 👋
                     </h2>
                     <p className="text-slate-400">
-                        Aquí tienes el estado de tu gestión para <span className="font-semibold text-slate-300">{profile.dependencias?.nombre || 'tu dependencia'}</span>.
+                        Aquí tienes el estado de tu gestión para <span className="font-semibold text-slate-300">{(profile.oficinas as any)?.nombre || profile.cargo || 'tu dependencia'}</span>.
                     </p>
                 </div>
                 <div className="text-right hidden md:block">

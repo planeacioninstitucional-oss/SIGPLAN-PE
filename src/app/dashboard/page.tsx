@@ -18,7 +18,7 @@ export default function DashboardPage() {
             if (user) {
                 const { data } = await supabase
                     .from('perfiles')
-                    .select('*, dependencias(nombre)')
+                    .select('*, oficinas(nombre, abreviatura)')
                     .eq('id', user.id)
                     .single()
                 setProfile(data)
@@ -39,7 +39,7 @@ export default function DashboardPage() {
     if (!profile) return null
 
     // Role based rendering
-    if (['super_admin', 'equipo_planeacion', 'gerente', 'auditor_externo'].includes(profile.rol)) {
+    if (['super_admin', 'equipo_planeacion', 'gerente', 'auditor'].includes(profile.rol)) {
         return (
             <div className="animate-in fade-in duration-500">
                 <h1 className="text-3xl font-bold text-white mb-6">Centro de Comando</h1>

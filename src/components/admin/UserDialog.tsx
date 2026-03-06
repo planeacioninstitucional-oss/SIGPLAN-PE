@@ -3,43 +3,45 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
-import type { Perfil, Dependencia, RolUsuario } from '@/types/database'
+import type { Perfil, Oficina, RolUsuario, ROL_LABELS } from '@/types/database'
 import { Checkbox } from '@/components/ui/checkbox'
+
+const ROL_LIST: { value: RolUsuario; label: string }[] = [
+    { value: 'super_admin', label: 'Super Administrador' },
+    { value: 'jefe_oficina', label: 'Jefe de Oficina' },
+    { value: 'equipo_planeacion', label: 'Equipo de Planeación' },
+    { value: 'gerente', label: 'Gerente' },
+    { value: 'auditor', label: 'Auditor' },
+]
 
 interface UserDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     userToEdit: Perfil | null
-    dependencias: Dependencia[]
+    oficinas: Oficina[]
     onSuccess: () => void
 }
 
 export function UserDialog({
-    open,
-    onOpenChange,
-    userToEdit,
-    dependencias,
-    onSuccess,
+    open, onOpenChange, userToEdit, oficinas, onSuccess,
 }: UserDialogProps) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState<{
         rol: RolUsuario
-        dependencia_id: string | null
+        oficina_id: string | null
         activo: boolean
     }>({
         rol: 'jefe_oficina',
-        dependencia_id: null,
+        oficina_id: null,
         activo: true,
     })
 
@@ -49,34 +51,32 @@ export function UserDialog({
         if (userToEdit) {
             setFormData({
                 rol: userToEdit.rol,
-                dependencia_id: userToEdit.dependencia_id,
+                oficina_id: userToEdit.oficina_id ?? null,
                 activo: userToEdit.activo,
             })
         }
     }, [userToEdit, open])
 
     const handleSubmit = async () => {
-        if (!userToEdit) return // Only editing existing users supported for now unless we add Invite logic
-
+        if (!userToEdit) return
         setLoading(true)
         try {
             const { error } = await supabase
                 .from('perfiles')
                 .update({
                     rol: formData.rol,
-                    dependencia_id: formData.dependencia_id === 'none' ? null : formData.dependencia_id, // Handle clear selection
+                    oficina_id: formData.oficina_id === 'none' ? null : formData.oficina_id,
                     activo: formData.activo,
-                    updated_at: new Date().toISOString()
+                    updated_at: new Date().toISOString(),
                 })
                 .eq('id', userToEdit.id)
 
             if (error) throw error
-
-            toast.success('Usuario actualizado')
+            toast.success('Usuario actualizado correctamente')
             onSuccess()
             onOpenChange(false)
-        } catch (error: any) {
-            toast.error('Error al actualizar', { description: error.message })
+        } catch (err: any) {
+            toast.error('Error al actualizar', { description: err.message })
         } finally {
             setLoading(false)
         }
@@ -86,64 +86,64 @@ export function UserDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Editar Usuario: {userToEdit?.email}</DialogTitle>
+                    <DialogTitle>Editar Usuario</DialogTitle>
+                    <p className="text-sm text-slate-400">{userToEdit?.email}</p>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
+                    {/* Rol */}
                     <div className="grid gap-2">
-                        <Label>Rol</Label>
+                        <Label>Rol en la plataforma</Label>
                         <Select
                             value={formData.rol}
-                            onValueChange={(val) => setFormData({ ...formData, rol: val as RolUsuario })}
+                            onValueChange={val => setFormData({ ...formData, rol: val as RolUsuario })}
                         >
                             <SelectTrigger>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="super_admin">Super Admin</SelectItem>
-                                <SelectItem value="equipo_planeacion">Equipo Planeación</SelectItem>
-                                <SelectItem value="jefe_oficina">Jefe de Oficina</SelectItem>
-                                <SelectItem value="gerente">Gerente</SelectItem>
-                                <SelectItem value="auditor_externo">Auditor Externo</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label>Dependencia</Label>
-                        <Select
-                            value={formData.dependencia_id || 'none'}
-                            onValueChange={(val) => setFormData({ ...formData, dependencia_id: val === 'none' ? null : val })}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Seleccione dependencia..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">-- Ninguna --</SelectItem>
-                                {dependencias.map(dep => (
-                                    <SelectItem key={dep.id} value={dep.id}>{dep.nombre}</SelectItem>
+                                {ROL_LIST.map(r => (
+                                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </div>
 
+                    {/* Oficina */}
+                    <div className="grid gap-2">
+                        <Label>Oficina / Dependencia</Label>
+                        <Select
+                            value={formData.oficina_id || 'none'}
+                            onValueChange={val => setFormData({ ...formData, oficina_id: val === 'none' ? null : val })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccione oficina..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">-- Sin oficina --</SelectItem>
+                                {oficinas.map(o => (
+                                    <SelectItem key={o.id} value={o.id}>{o.nombre}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Activo */}
                     <div className="flex items-center space-x-2">
                         <Checkbox
                             id="activo"
                             checked={formData.activo}
-                            onCheckedChange={(c) => setFormData({ ...formData, activo: c as boolean })}
+                            onCheckedChange={c => setFormData({ ...formData, activo: c as boolean })}
                         />
-                        <Label htmlFor="activo">Usuario Activo</Label>
+                        <Label htmlFor="activo">Usuario activo</Label>
                     </div>
                 </div>
 
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        Cancelar
-                    </Button>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
                     <Button onClick={handleSubmit} disabled={loading} className="bg-blue-600 hover:bg-blue-500">
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Guardar
+                        Guardar cambios
                     </Button>
                 </DialogFooter>
             </DialogContent>

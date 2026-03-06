@@ -22,12 +22,13 @@ import {
     History,
     FileSpreadsheet
 } from 'lucide-react'
-import type { RolUsuario } from '@/types/database'
+import type { RolUsuario, Perfil } from '@/types/database'
+import { hasSidebarAccess } from '@/lib/responsabilidades'
 
 interface SidebarProps {
     isOpen: boolean
     toggleSidebar: () => void
-    userRole: RolUsuario
+    userProfile: Perfil & { oficinas?: { nombre: string, abreviatura?: string } }
 }
 
 type MenuItem = {
@@ -35,6 +36,7 @@ type MenuItem = {
     icon: React.ElementType
     href: string
     roles?: RolUsuario[]
+    oficinasHabilitadas?: string[]
 }
 
 type MenuSection = {
@@ -90,7 +92,9 @@ const MENU_ITEMS: MenuSection[] = [
             {
                 name: 'Alistamiento',
                 icon: ShieldAlert,
-                href: '/alistamiento'
+                href: '/alistamiento',
+                // Ejemplo de restricción, puedes agregar otras oficinas luego
+                // oficinasHabilitadas: ['Oficina de Control Interno']
             },
         ],
     },
@@ -101,7 +105,7 @@ const MENU_ITEMS: MenuSection[] = [
                 name: 'Reportes Gerenciales',
                 icon: PieChart,
                 href: '/reportes',
-                roles: ['super_admin', 'gerente', 'auditor_externo']
+                roles: ['super_admin', 'gerente', 'auditor']
             },
         ],
     },
@@ -136,13 +140,33 @@ const MENU_ITEMS: MenuSection[] = [
     },
 ]
 
-export function Sidebar({ isOpen, toggleSidebar, userRole }: SidebarProps) {
+export function Sidebar({ isOpen, toggleSidebar, userProfile }: SidebarProps) {
     const pathname = usePathname()
 
+    // Obtener nombres para filtrado
+    const userRole = userProfile?.rol ?? 'funcionario'
+    const oficinaUsuario = userProfile?.oficinas?.nombre || ''
+
     const filterItems = (section: MenuSection) => {
-        const filtered = section.items.filter(item =>
-            !item.roles || item.roles.includes(userRole)
-        )
+        const filtered = section.items.filter(item => {
+            // Filtrar por rol
+            if (item.roles && !item.roles.includes(userRole as RolUsuario)) return false
+
+            // Si hay oficinasHabilitadas, super_admin puede ver todo, pero otros roles se restringen a su oficina
+            if (item.oficinasHabilitadas && userRole !== 'super_admin') {
+                if (!item.oficinasHabilitadas.includes(oficinaUsuario)) {
+                    return false
+                }
+            }
+
+            // Sidebar tab assignment logic
+            if (!hasSidebarAccess(item.name, userProfile?.nombre_completo, userRole, oficinaUsuario)) {
+                return false
+            }
+
+            return true
+        })
+
         return filtered.length > 0 ? { ...section, items: filtered } : null
     }
 

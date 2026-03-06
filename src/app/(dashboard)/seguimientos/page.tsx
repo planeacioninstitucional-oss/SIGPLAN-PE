@@ -20,6 +20,7 @@ import { SemaforoCell } from '@/components/seguimientos/SemaforoCell'
 import { SeguimientoDialog } from '@/components/seguimientos/SeguimientoDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { canViewInstrumento, getDependenciasParaInstrumento } from '@/lib/responsabilidades'
 
 // ─── Period generation based on instrument frequency ───────────────────────
 function getPeriodsForFrecuencia(frecuencia: FrecuenciaInstrumento): string[] {
@@ -63,7 +64,7 @@ export default function SeguimientosPage() {
     const [dependencias, setDependencias] = useState<Dependencia[]>([])
     const [instrumentos, setInstrumentos] = useState<Instrumento[]>([])
     const [seguimientos, setSeguimientos] = useState<Seguimiento[]>([])
-    const [userProfile, setUserProfile] = useState<{ id: string; rol: RolUsuario; dependencia_id: string | null } | null>(null)
+    const [userProfile, setUserProfile] = useState<{ id: string; rol: RolUsuario; dependencia_id: string | null; nombre_completo?: string | null } | null>(null)
     const [myAssignedIds, setMyAssignedIds] = useState<string[]>([])  // IDs de instrumentos asignados al usuario
 
     // Selection
@@ -116,7 +117,10 @@ export default function SeguimientosPage() {
 
                 setDependencias(depsRes.data ?? [])
                 const insts = instRes.data ?? []
+
                 setInstrumentos(insts)
+
+                // Select first visible instrument
                 if (insts.length > 0 && !selectedInstrumentoId) {
                     setSelectedInstrumentoId(insts[0].id)
                 }
@@ -151,8 +155,20 @@ export default function SeguimientosPage() {
     useEffect(() => { fetchSeguimientos() }, [fetchSeguimientos])
 
     // ── Helpers ─────────────────────────────────────────────────────────────
+
+    // Filter instruments based on user profile responsibility explicitly mapping the list provided
+    const visibleInstrumentos = instrumentos.filter(i => {
+        if (!userProfile) return false;
+        return canViewInstrumento(i.nombre, userProfile.nombre_completo, userProfile.rol);
+    });
+
     const currentInstrumento = instrumentos.find(i => i.id === selectedInstrumentoId)
     const periods = currentInstrumento ? getPeriodsForFrecuencia(currentInstrumento.frecuencia) : []
+
+    // Filtra las dependencias que aplican para este instrumento
+    const visibleDependencias = currentInstrumento
+        ? getDependenciasParaInstrumento(currentInstrumento.nombre, dependencias)
+        : dependencias;
 
     const seguimientosMap = useMemo(() => {
         const map = new Map<string, Seguimiento>()
@@ -178,7 +194,7 @@ export default function SeguimientosPage() {
         verde: seguimientos.filter(s => s.estado_semaforo === 'verde').length,
         amarillo: seguimientos.filter(s => s.estado_semaforo === 'amarillo').length,
         rojo: seguimientos.filter(s => s.estado_semaforo === 'rojo').length,
-        gris: (dependencias.length * periods.length) - seguimientos.filter(s => s.estado_semaforo !== 'gris').length,
+        gris: (visibleDependencias.length * periods.length) - seguimientos.filter(s => s.estado_semaforo !== 'gris').length,
     }
 
     const canInteract = userProfile && ['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile.rol)
@@ -231,7 +247,7 @@ export default function SeguimientosPage() {
             <div className="space-y-2">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Instrumento de Planeación</p>
                 <div className="flex flex-wrap gap-2">
-                    {instrumentos.map((inst) => {
+                    {visibleInstrumentos.map((inst) => {
                         const isSelected = inst.id === selectedInstrumentoId
                         const freq = FRECUENCIA_BADGE[inst.frecuencia]
                         const isMyAssignment = myAssignedIds.includes(inst.id)
@@ -287,67 +303,65 @@ export default function SeguimientosPage() {
                             </div>
                         )}
 
-                        <div className="overflow-x-auto max-h-[calc(100vh-480px)]">
-                            <Table>
-                                <TableHeader className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm">
-                                    <TableRow className="border-slate-800 hover:bg-transparent">
-                                        <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-slate-900/95 z-20 border-r border-slate-800 text-slate-300 font-bold py-4 pl-5">
-                                            Dependencia / Oficina
+                        <Table wrapperClassName="max-h-[calc(100vh-480px)]">
+                            <TableHeader className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm">
+                                <TableRow className="border-slate-800 hover:bg-transparent">
+                                    <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-slate-900/95 z-20 border-r border-slate-800 text-slate-300 font-bold py-4 pl-5">
+                                        Dependencia / Oficina
+                                    </TableHead>
+                                    {periods.map((period) => (
+                                        <TableHead key={period} className="text-center min-w-[110px] text-slate-400 font-semibold text-xs uppercase tracking-wide py-4">
+                                            {period}
                                         </TableHead>
-                                        {periods.map((period) => (
-                                            <TableHead key={period} className="text-center min-w-[110px] text-slate-400 font-semibold text-xs uppercase tracking-wide py-4">
-                                                {period}
-                                            </TableHead>
-                                        ))}
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {dependencias.length === 0 && !loading && (
-                                        <TableRow>
-                                            <TableCell colSpan={periods.length + 1} className="text-center text-slate-500 py-16">
-                                                No hay dependencias registradas.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                    {dependencias.map((dep, i) => (
-                                        <TableRow
-                                            key={dep.id}
-                                            className={cn(
-                                                'border-slate-800/50 transition-colors',
-                                                i % 2 === 0 ? 'bg-slate-950/20' : 'bg-transparent',
-                                                'hover:bg-slate-800/40'
-                                            )}
-                                        >
-                                            <TableCell className="font-medium text-slate-200 sticky left-0 bg-slate-950 z-10 border-r border-slate-800 py-3 pl-5">
-                                                <div className="flex flex-col gap-0.5">
-                                                    <span className="text-sm font-semibold line-clamp-2 max-w-[240px]">{dep.nombre}</span>
-                                                </div>
-                                            </TableCell>
-                                            {periods.map((period) => {
-                                                const seg = getSeguimiento(dep.id, period)
-                                                const estado = seg?.estado_semaforo ?? 'gris'
-                                                return (
-                                                    <TableCell key={`${dep.id}-${period}`} className="text-center p-2">
-                                                        <div className="flex justify-center">
-                                                            <button
-                                                                onClick={() => canInteract && handleCellClick(dep, period)}
-                                                                title={seg ? `${estado} — Click para editar` : 'Sin reporte — Click para registrar'}
-                                                                className={cn(
-                                                                    'transition-all duration-200',
-                                                                    canInteract ? 'hover:scale-125 cursor-pointer' : 'cursor-default opacity-70'
-                                                                )}
-                                                            >
-                                                                <SemaforoCell estado={estado} />
-                                                            </button>
-                                                        </div>
-                                                    </TableCell>
-                                                )
-                                            })}
-                                        </TableRow>
                                     ))}
-                                </TableBody>
-                            </Table>
-                        </div>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {visibleDependencias.length === 0 && !loading && (
+                                    <TableRow>
+                                        <TableCell colSpan={periods.length + 1} className="text-center text-slate-500 py-16">
+                                            No hay dependencias registradas.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                {visibleDependencias.map((dep, i) => (
+                                    <TableRow
+                                        key={dep.id}
+                                        className={cn(
+                                            'border-slate-800/50 transition-colors',
+                                            i % 2 === 0 ? 'bg-slate-950/20' : 'bg-transparent',
+                                            'hover:bg-slate-800/40'
+                                        )}
+                                    >
+                                        <TableCell className="font-medium text-slate-200 sticky left-0 bg-slate-950 z-10 border-r border-slate-800 py-3 pl-5">
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-sm font-semibold line-clamp-2 max-w-[240px]">{dep.nombre}</span>
+                                            </div>
+                                        </TableCell>
+                                        {periods.map((period) => {
+                                            const seg = getSeguimiento(dep.id, period)
+                                            const estado = seg?.estado_semaforo ?? 'gris'
+                                            return (
+                                                <TableCell key={`${dep.id}-${period}`} className="text-center p-2">
+                                                    <div className="flex justify-center">
+                                                        <button
+                                                            onClick={() => canInteract && handleCellClick(dep, period)}
+                                                            title={seg ? `${estado} — Click para editar` : 'Sin reporte — Click para registrar'}
+                                                            className={cn(
+                                                                'transition-all duration-200',
+                                                                canInteract ? 'hover:scale-125 cursor-pointer' : 'cursor-default opacity-70'
+                                                            )}
+                                                        >
+                                                            <SemaforoCell estado={estado} />
+                                                        </button>
+                                                    </div>
+                                                </TableCell>
+                                            )
+                                        })}
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
 
                         {/* Legend */}
                         <div className="flex items-center gap-6 px-5 py-3 border-t border-slate-800 bg-slate-900/50">

@@ -8,10 +8,11 @@ import { createClient } from '@/lib/supabase/client'
 import type { Perfil } from '@/types/database'
 import { Loader2 } from 'lucide-react'
 
+import { useAuthStore } from '@/stores/authStore'
+
 export function AppShell({ children }: { children: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(true)
-    const [userProfile, setUserProfile] = useState<Perfil | null>(null)
-    const [loading, setLoading] = useState(true)
+    const { userProfile, initialized, fetchProfile } = useAuthStore()
     const pathname = usePathname()
     const router = useRouter()
     const supabase = createClient()
@@ -20,39 +21,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const isPublicRoute = ['/login', '/auth/callback', '/register', '/forgot-password'].includes(pathname)
 
     useEffect(() => {
-        const checkUser = async () => {
-            if (isPublicRoute) {
-                setLoading(false)
-                return
-            }
-
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) {
-                router.push('/login')
-                return
-            }
-
-            // Fetch profile
-            const { data: profile } = await supabase
-                .from('perfiles')
-                .select('*, dependencias(nombre)')
-                .eq('id', user.id)
-                .single()
-
-            if (profile) {
-                setUserProfile(profile)
-            }
-            setLoading(false)
+        if (!isPublicRoute && !initialized) {
+            fetchProfile()
+        } else if (!isPublicRoute && initialized && !userProfile) {
+            router.push('/login')
         }
-
-        checkUser()
-    }, [pathname, isPublicRoute, router, supabase])
+    }, [pathname, isPublicRoute, router, initialized, userProfile, fetchProfile])
 
     if (isPublicRoute) {
         return <main className="min-h-screen bg-background">{children}</main>
     }
 
-    if (loading) {
+    if (!isPublicRoute && (!initialized || !userProfile)) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -65,7 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Sidebar
                 isOpen={isOpen}
                 toggleSidebar={() => setIsOpen(!isOpen)}
-                userRole={userProfile?.rol ?? 'jefe_oficina'}
+                userProfile={userProfile as any}
             />
 
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isOpen ? 'md:ml-64' : 'md:ml-0'}`}>

@@ -18,19 +18,22 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Loader2, Plus, Target, CheckCircle2 } from 'lucide-react'
 import type { MetasPdd, RolUsuario, Dependencia } from '@/types/database'
-import { DEPENDENCIAS_PDD } from '@/types/database'
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
+import { useAuthStore } from '@/stores/authStore'
+
 export default function MetasPddPage() {
     const { vigenciaActual } = useVigenciaStore()
+    const { userProfile, initialized } = useAuthStore()
     const [loading, setLoading] = useState(true)
-    const [userProfile, setUserProfile] = useState<{ id: string, rol: RolUsuario, dependencia_id: string } | null>(null)
     const [dependencia, setDependencia] = useState<Dependencia | null>(null)
     const [metas, setMetas] = useState<MetasPdd[]>([])
+    const [todasDependencias, setTodasDependencias] = useState<Dependencia[]>([])
 
-    // Dialog State
+    // State Variables for Modal
     const [dialogOpen, setDialogOpen] = useState(false)
     const [editingMeta, setEditingMeta] = useState<MetasPdd | null>(null)
     const [formData, setFormData] = useState({
@@ -40,42 +43,29 @@ export default function MetasPddPage() {
         meta_programada: '',
         meta_ejecutada: '',
         observaciones: '',
+        dependencia_id: '',
     })
 
-    // Access Control State
     const [hasAccess, setHasAccess] = useState(false)
-
     const supabase = createClient()
 
     useEffect(() => {
-        const init = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
+        if (!initialized) return
 
-            const { data: profile } = await supabase
-                .from('perfiles')
-                .select('*, dependencias(*)')
-                .eq('id', user.id)
-                .single()
+        if (userProfile) {
+            setDependencia((userProfile as any).oficinas as Dependencia)
 
-            if (profile) {
-                setUserProfile(profile as any)
-                setDependencia(profile.dependencias as any)
+            // Check Access
+            const isAuthorizedDep = true
+            const isSuperUser = ['super_admin', 'equipo_planeacion', 'gerente', 'auditor'].includes(userProfile.rol)
 
-                // Check Access
-                const depName = profile.dependencias?.nombre || ''
-                const isAuthorizedDep = DEPENDENCIAS_PDD.some(d => depName.toLowerCase().includes(d.toLowerCase()))
-                const isSuperUser = ['super_admin', 'equipo_planeacion', 'gerente', 'auditor_externo'].includes(profile.rol)
-
-                if (isAuthorizedDep || isSuperUser) {
-                    setHasAccess(true)
-                } else {
-                    setLoading(false)
-                }
+            if (isAuthorizedDep || isSuperUser) {
+                setHasAccess(true)
+            } else {
+                setLoading(false)
             }
         }
-        init()
-    }, [])
+    }, [initialized, userProfile])
 
     useEffect(() => {
         if (!hasAccess || !vigenciaActual || !dependencia) return
@@ -90,13 +80,14 @@ export default function MetasPddPage() {
             // Maybe super users want to see all authorized dependencies.
             // For now, let's just fetch the user's dependency if they are jefe_oficina, or all if admin.
 
-            let query = supabase.from('metas_pdd').select('*').eq('vigencia_id', vigenciaActual.id)
+            let query = supabase.from('metas_pdd').select('*, dependencias(nombre)').eq('vigencia_id', vigenciaActual.id)
 
             if (userProfile?.rol === 'jefe_oficina' && dependencia) {
                 query = query.eq('dependencia_id', dependencia.id)
             } else {
-                // Maybe filter only those in DEPENDENCIAS_PDD?
-                // For now show all that exists.
+                // If super_admin or equipo_planeacion, fetch all dependencias as well for the dropdown
+                const { data: depsData } = await supabase.from('dependencias').select('*').eq('activa', true).order('nombre')
+                if (depsData) setTodasDependencias(depsData)
             }
 
             const { data, error } = await query.order('codigo_meta')
@@ -119,6 +110,7 @@ export default function MetasPddPage() {
                 meta_programada: meta.meta_programada?.toString() || '0',
                 meta_ejecutada: meta.meta_ejecutada?.toString() || '0',
                 observaciones: meta.observaciones || '',
+                dependencia_id: meta.dependencia_id || (dependencia?.id ?? ''),
             })
         } else {
             setFormData({
@@ -128,18 +120,28 @@ export default function MetasPddPage() {
                 meta_programada: '',
                 meta_ejecutada: '',
                 observaciones: '',
+                dependencia_id: dependencia?.id ?? '',
             })
         }
         setDialogOpen(true)
     }
 
     const handleSave = async () => {
-        if (!vigenciaActual || !dependencia) return
+        if (!vigenciaActual) return
+
+        const isSuperUser = ['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '')
+        const targetDependenciaId = isSuperUser ? formData.dependencia_id : dependencia?.id
+
+        if (!targetDependenciaId) {
+            toast.error('Debe seleccionar una dependencia o pertenecer a una')
+            return
+        }
+
         setLoading(true)
         try {
             const payload: any = {
                 vigencia_id: vigenciaActual.id,
-                dependencia_id: dependencia.id, // For creating new, assign current dependency. Admins creating for others logic needed? Assuming Jefes manage their own.
+                dependencia_id: targetDependenciaId,
                 codigo_meta: formData.codigo_meta,
                 descripcion: formData.descripcion,
                 unidad_medida: formData.unidad_medida,
@@ -194,8 +196,8 @@ export default function MetasPddPage() {
                     <h1 className="text-3xl font-bold text-white">Metas PDD</h1>
                     <p className="text-slate-400">Seguimiento al Plan de Desarrollo Distrital</p>
                 </div>
-                {/* Allow creating new metas only for authorized dependencies owners */}
-                {userProfile?.rol === 'jefe_oficina' && (
+                {/* Allow creating new metas only for authorized roles */}
+                {['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '') && (
                     <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500">
                         <Plus className="w-4 h-4 mr-2" />
                         Nueva Meta
@@ -216,10 +218,13 @@ export default function MetasPddPage() {
                             <TableRow>
                                 <TableHead className="w-[100px] text-slate-300">Código</TableHead>
                                 <TableHead className="min-w-[200px] text-slate-300">Descripción</TableHead>
+                                {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                    <TableHead className="text-slate-300">Oficina</TableHead>
+                                )}
                                 <TableHead className="text-slate-300">Unidad</TableHead>
-                                <TableHead className="text-right text-slate-300">Programado</TableHead>
-                                <TableHead className="text-right text-slate-300">Ejecutado</TableHead>
-                                <TableHead className="text-center text-slate-300">% Cumplimiento</TableHead>
+                                <TableHead className="text-right text-slate-300">Prog.</TableHead>
+                                <TableHead className="text-right text-slate-300">Ejec.</TableHead>
+                                <TableHead className="text-center text-slate-300">% Cumpl.</TableHead>
                                 <TableHead className="text-right text-slate-300">Acciones</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -233,6 +238,9 @@ export default function MetasPddPage() {
                                     <TableRow key={meta.id} className="hover:bg-slate-800/50">
                                         <TableCell className="font-medium text-blue-400">{meta.codigo_meta}</TableCell>
                                         <TableCell className="text-slate-300">{meta.descripcion}</TableCell>
+                                        {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                            <TableCell className="text-slate-400 text-xs">{(meta as any).dependencias?.nombre || '—'}</TableCell>
+                                        )}
                                         <TableCell className="text-slate-400">{meta.unidad_medida}</TableCell>
                                         <TableCell className="text-right text-slate-300">{meta.meta_programada}</TableCell>
                                         <TableCell className="text-right text-slate-300">{meta.meta_ejecutada}</TableCell>
@@ -242,9 +250,11 @@ export default function MetasPddPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm" onClick={() => handleEdit(meta)}>
-                                                Editar
-                                            </Button>
+                                            {['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '') && (
+                                                <Button variant="ghost" size="sm" onClick={() => handleEdit(meta)}>
+                                                    Editar
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 )
@@ -272,6 +282,21 @@ export default function MetasPddPage() {
                             <Label>Código</Label>
                             <Input value={formData.codigo_meta} onChange={e => setFormData({ ...formData, codigo_meta: e.target.value })} placeholder="Ej. 1.1.2" />
                         </div>
+                        {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                            <div className="grid gap-2">
+                                <Label>Dependencia Asignada</Label>
+                                <select
+                                    className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 text-slate-200"
+                                    value={formData.dependencia_id}
+                                    onChange={e => setFormData({ ...formData, dependencia_id: e.target.value })}
+                                >
+                                    <option value="" disabled>Seleccione una dependencia...</option>
+                                    {todasDependencias.map(d => (
+                                        <option key={d.id} value={d.id}>{d.nombre}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         <div className="grid gap-2">
                             <Label>Descripción</Label>
                             <Textarea value={formData.descripcion} onChange={e => setFormData({ ...formData, descripcion: e.target.value })} placeholder="Descripción de la meta..." />
