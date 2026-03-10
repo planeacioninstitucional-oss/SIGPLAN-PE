@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Building2, Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Lock, Mail, ShieldCheck } from 'lucide-react'
 
 export default function LoginPage() {
     const [email, setEmail] = useState('')
@@ -35,17 +36,29 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex bg-[hsl(222,47%,5%)] overflow-hidden">
             {/* Left branding panel */}
-            <div className="hidden lg:flex flex-col justify-between w-[45%] relative p-12 bg-gradient-to-br from-blue-950/80 to-slate-950">
+            <div className="hidden lg:flex flex-col justify-between w-[45%] relative p-12">
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                    <Image
+                        src="/mapa.jpeg"
+                        alt="Fondo Ibagué"
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                    {/* Dark gradient overlay to ensure text is readable */}
+                    <div className="absolute inset-0 bg-blue-950/80 bg-gradient-to-br from-blue-950/85 to-slate-950/90" />
+                </div>
                 {/* Background glow */}
-                <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl" />
-                    <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl" />
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl opacity-50" />
+                    <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-600/20 rounded-full blur-3xl opacity-50" />
                 </div>
 
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
-                            <Building2 className="w-6 h-6 text-white" />
+                    <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 rounded-xl bg-white p-2 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.6)]">
+                            <Image src="/logo.png" alt="Logo INFIBAGUE" width={80} height={80} className="object-contain" priority />
                         </div>
                         <div>
                             <p className="text-white font-bold text-lg leading-none">INFIBAGUÉ</p>
@@ -56,9 +69,9 @@ export default function LoginPage() {
 
                 <div className="relative z-10 space-y-6">
                     <div>
-                        <h1 className="text-4xl font-bold text-white leading-tight">
+                        <h1 className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.1] tracking-tight drop-shadow-2xl font-sans pb-2">
                             Plataforma de<br />
-                            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                            <span className="bg-gradient-to-r from-blue-300 via-cyan-300 to-teal-400 bg-clip-text text-transparent drop-shadow-xl inline-block mt-2">
                                 Gestión Estratégica
                             </span>
                         </h1>
@@ -92,28 +105,28 @@ export default function LoginPage() {
             <div className="flex-1 flex items-center justify-center p-8">
                 <div className="w-full max-w-md space-y-8">
                     {/* Mobile logo */}
-                    <div className="lg:hidden flex items-center gap-3 mb-8">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
-                            <Building2 className="w-6 h-6 text-white" />
+                    <div className="lg:hidden flex flex-col items-center gap-4 mb-10 pb-6 border-b border-white/10">
+                        <div className="w-24 h-24 rounded-2xl bg-white p-3 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.6)] animate-pulse">
+                            <Image src="/logo.png" alt="Logo INFIBAGUE" width={80} height={80} className="object-contain" priority />
                         </div>
-                        <div>
-                            <p className="text-white font-bold text-lg">INFIBAGUÉ</p>
-                            <p className="text-blue-400 text-xs">Plataforma PGE-INFI</p>
+                        <div className="text-center">
+                            <p className="text-white font-black text-2xl tracking-wide">INFIBAGUÉ</p>
+                            <p className="text-cyan-400 text-sm font-medium">Plataforma PGE-INFI</p>
                         </div>
                     </div>
 
                     <div>
-                        <h2 className="text-2xl font-bold text-white">Iniciar sesión</h2>
-                        <p className="text-slate-400 text-sm mt-1">Accede con tus credenciales institucionales</p>
+                        <h2 className="text-4xl font-extrabold text-white mb-2">Iniciar menú</h2>
+                        <p className="text-blue-300 text-base">Accede con tus credenciales institucionales</p>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-5">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300" htmlFor="email">
-                                Correo institucional
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-3">
+                            <label className="text-base font-semibold text-slate-200" htmlFor="email">
+                                Correo Institucional
                             </label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                            <div className="relative group">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-cyan-400 transition-colors" />
                                 <input
                                     id="email"
                                     type="email"
@@ -122,17 +135,17 @@ export default function LoginPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                     disabled={loading}
-                                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors disabled:opacity-50"
+                                    className="w-full pl-12 pr-4 py-4 bg-[#0a1226]/80 border border-blue-900/40 rounded-xl text-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/50 transition-all disabled:opacity-50 shadow-inner"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-300" htmlFor="password">
+                        <div className="space-y-3">
+                            <label className="text-base font-semibold text-slate-200" htmlFor="password">
                                 Contraseña
                             </label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                            <div className="relative group">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-cyan-400 transition-colors" />
                                 <input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
@@ -141,14 +154,14 @@ export default function LoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     disabled={loading}
-                                    className="w-full pl-10 pr-12 py-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors disabled:opacity-50"
+                                    className="w-full pl-12 pr-12 py-4 bg-[#0a1226]/80 border border-blue-900/40 rounded-xl text-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/50 transition-all disabled:opacity-50 shadow-inner"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-cyan-400 transition-colors p-1"
                                 >
-                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
                             </div>
                         </div>
@@ -156,16 +169,16 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            style={{ boxShadow: '0 0 20px rgba(59,130,246,0.3)' }}
+                            className="w-full py-4 mt-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-lg rounded-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
+                            style={{ boxShadow: '0 0 30px rgba(6,182,212,0.4)' }}
                         >
                             {loading ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <Loader2 className="w-5 h-5 animate-spin" />
                                     Verificando...
                                 </>
                             ) : (
-                                'Ingresar al sistema'
+                                'Iniciar sistema'
                             )}
                         </button>
 
