@@ -34,13 +34,15 @@ export function JefeDashboard({ profile }: { profile: Perfil }) {
 
     useEffect(() => {
         const fetchData = async () => {
-            if (!vigenciaActual || !(profile as any).dependencia_id) {
+            if (!vigenciaActual || !profile.oficina_id) {
                 setLoading(false)
                 return
             }
 
-            const { data: allDeps } = await supabase.from('dependencias').select('*')
-            const misDeps = allDeps ? getMisDependencias((profile as any).dependencia_id, allDeps) : []
+            const { data: todosProcesos } = await supabase.from('procesos_institucionales').select('*')
+            const { data: todasOficinas } = await supabase.from('oficinas').select('*')
+            
+            const misDeps = (todosProcesos && todasOficinas) ? getMisDependencias(profile.oficina_id, todosProcesos, todasOficinas) : []
             const misDepsIds = misDeps.map(d => d.id)
 
             if (misDepsIds.length === 0) {

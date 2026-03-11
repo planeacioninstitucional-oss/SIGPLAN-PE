@@ -145,7 +145,7 @@ export function PamDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl w-full max-h-[92vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700">
                 <DialogHeader>
                     <DialogTitle>{pamToEdit ? 'Editar Registro PAM' : 'Nuevo Registro PAM'}</DialogTitle>
                 </DialogHeader>

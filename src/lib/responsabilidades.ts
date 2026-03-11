@@ -39,8 +39,7 @@ export function hasSidebarAccess(itemName: string, nombre_completo: string | nul
                 'DIRECCIÓN OPERATIVA Y COMERCIAL',
                 'DIRECCION OPERATIVA Y COMERCIAL',
                 'DIRECCIÓN DE PROYECTOS Y SERVICIOS FINANCIEROS',
-                'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS',
-                'DIRECCIÓN FINANCIERA', 'DIRECCION FINANCIERA'
+                'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS'
             ];
             // Permitimos si la oficina del jefe coincide con alguna de la lista
             return ofisPDD.some(o => oficinaUpper.includes(o) || o.includes(oficinaUpper));
@@ -129,47 +128,64 @@ export function getDependenciasParaInstrumento(instrumentoNombre: string, todasD
 export function formatDependenciaName(name: string | null | undefined): string {
     if (!name) return '';
     const nameUpper = name.toUpperCase().trim();
-    if (nameUpper === 'FINANCIERA' || nameUpper === 'DIRECCION FINANCIERA' || nameUpper === 'DIRECCIÓN FINANCIERA') return 'Dirección Financiera';
-    if (nameUpper === 'HUMANA' || nameUpper === 'GESTION HUMANA' || nameUpper === 'GESTIÓN HUMANA') return 'Gestión Humana';
-    if (nameUpper === 'JURIDICA' || nameUpper === 'JURÍDICA' || nameUpper === 'GESTION JURIDICA' || nameUpper === 'GESTIÓN JURÍDICA') return 'Gestión Jurídica';
+    if (nameUpper.includes('FINANCIERA')) return 'Dirección Financiera';
+    if (nameUpper.includes('HUMANA') || nameUpper.includes('SERVICIOS ADMINISTRATIVOS')) return 'Gestión Humana / Serv. Admin.';
+    if (nameUpper.includes('JURIDICA') || nameUpper.includes('JURÍDICA')) return 'Gestión Jurídica';
     if (nameUpper.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) return 'Dirección de Proyectos y Servicios Financieros';
     if (nameUpper.includes('OPERATIVA Y COMERCIAL')) return 'Dirección Operativa y Comercial';
+    if (nameUpper.includes('PLANEACIÓN') || nameUpper.includes('PLANEACION')) return 'Planeación Institucional';
+    if (nameUpper.includes('TECNOLÓGICA') || nameUpper.includes('TECNOLOGICA')) return 'Gestión Tecnológica';
     return name;
 }
 
-export function getMisDependencias(miDependenciaId: string, todasLasDependencias: any[]): any[] {
-    if (!miDependenciaId || !todasLasDependencias || todasLasDependencias.length === 0) return [];
+/**
+ * Retorna los procesos que una oficina debe gestionar.
+ * @param miOficinaId ID de la oficina del usuario (desde el perfil)
+ * @param todosLosProcesos Lista completa de procesos_institucionales (con oficina_id)
+ * @param todasLasOficinas Lista completa de oficinas (para buscar por nombre)
+ */
+export function getMisDependencias(miOficinaId: string, todosLosProcesos: any[], todasLasOficinas: any[]): any[] {
+    if (!miOficinaId || !todosLosProcesos || todosLosProcesos.length === 0) return [];
 
-    const baseDep = todasLasDependencias.find(d => d.id === miDependenciaId);
-    if (!baseDep) return [];
+    const miOficina = todasLasOficinas.find(o => o.id === miOficinaId);
+    if (!miOficina) return [];
 
-    const nameUpper = (baseDep.nombre || '').toUpperCase().trim();
-    let subProcesos: string[] = [];
+    const ofiNombre = (miOficina.nombre || '').toUpperCase().trim();
+    let subProcesosKeywords: string[] = [];
 
-    if (nameUpper.includes('FINANCIERA') || nameUpper.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) {
-        subProcesos = [
-            'BICICLETAS RUEDA POR IBAGUÉ', 'RUEDA POR IBAGUE',
-            'COMPLEJO CULTURAL PANÓPTICO', 'CULTURAL PANOPTICO',
-            'GESTIÓN DE OPERACIONES FINANCIERAS', 'OPERACIONES FINANCIERAS',
-            'GESTIÓN COMERCIAL', 'COMERCIAL'
+    // LÓGICA DE CRUCES: Direcciones que ven procesos de otras oficinas
+    if (ofiNombre.includes('FINANCIERA') || ofiNombre.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) {
+        subProcesosKeywords = [
+            'GESTIÓN FINANCIERA', 'GESTION FINANCIERA'
         ];
-    } else if (nameUpper.includes('OPERATIVA Y COMERCIAL') || nameUpper.includes('OPERACIONES')) {
-        subProcesos = [
+    } else if (ofiNombre.includes('OPERATIVA Y COMERCIAL')) {
+        subProcesosKeywords = [
             'ALUMBRADO PÚBLICO', 'ALUMBRADO PUBLICO',
             'PARQUES Y ZONAS VERDES',
             'PLAZAS DE MERCADO',
-            'RELLENO SANITARIO'
+            'RELLENO SANITARIO',
+            'COMERCIAL',
+            'EMPRESARIALES'
         ];
     }
 
-    const results = [baseDep];
+    // El usuario siempre ve los procesos de su propia oficina
+    const resultsMap = new Map<string, any>();
+    
+    // 1. Agregar procesos propios
+    todosLosProcesos
+        .filter(p => p.oficina_id === miOficinaId)
+        .forEach(p => resultsMap.set(p.id, p));
 
-    for (const dep of todasLasDependencias) {
-        if (dep.id === baseDep.id) continue;
-        if (subProcesos.some(sp => (dep.nombre || '').toUpperCase().includes(sp))) {
-            results.push(dep);
-        }
+    // 2. Agregar procesos por keywords (la "lógica" de cruces)
+    if (subProcesosKeywords.length > 0) {
+        todosLosProcesos.forEach(p => {
+            const procNombre = (p.nombre || '').toUpperCase().trim();
+            if (subProcesosKeywords.some(kw => procNombre.includes(kw))) {
+                resultsMap.set(p.id, p);
+            }
+        });
     }
 
-    return results;
+    return Array.from(resultsMap.values());
 }

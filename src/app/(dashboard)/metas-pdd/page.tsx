@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
 import { useAuthStore } from '@/stores/authStore'
+import { hasSidebarAccess } from '@/lib/responsabilidades'
 
 export default function MetasPddPage() {
     const { vigenciaActual } = useVigenciaStore()
@@ -55,11 +56,11 @@ export default function MetasPddPage() {
         if (userProfile) {
             setDependencia((userProfile as any).oficinas as Dependencia)
 
-            // Check Access
-            const isAuthorizedDep = true
+            // Comprobar Acceso: Permite si es super usuario o si tiene acceso según responsabilidades
             const isSuperUser = ['super_admin', 'equipo_planeacion', 'gerente', 'auditor'].includes(userProfile.rol)
+            const authorizedByName = hasSidebarAccess('Metas PDD', userProfile.nombre_completo, userProfile.rol, (userProfile as any).oficinas?.nombre)
 
-            if (isAuthorizedDep || isSuperUser) {
+            if (isSuperUser || authorizedByName) {
                 setHasAccess(true)
             } else {
                 setLoading(false)
@@ -76,18 +77,24 @@ export default function MetasPddPage() {
         if (!vigenciaActual) return
         setLoading(true)
         try {
-            // If super user, fetch all? Requirement says "only visible to authorized". 
-            // Maybe super users want to see all authorized dependencies.
-            // For now, let's just fetch the user's dependency if they are jefe_oficina, or all if admin.
+            // Fetch all dependencias for mapping and dropdown
+            const { data: depsData } = await supabase.from('dependencias').select('*').eq('activa', true).order('nombre')
+            if (depsData) setTodasDependencias(depsData)
 
             let query = supabase.from('metas_pdd').select('*, dependencias(nombre)').eq('vigencia_id', vigenciaActual.id)
 
-            if (userProfile?.rol === 'jefe_oficina' && dependencia) {
-                query = query.eq('dependencia_id', dependencia.id)
-            } else {
-                // If super_admin or equipo_planeacion, fetch all dependencias as well for the dropdown
-                const { data: depsData } = await supabase.from('dependencias').select('*').eq('activa', true).order('nombre')
-                if (depsData) setTodasDependencias(depsData)
+            // Si es jefe_oficina o funcionario (sin ser super_admin/equipo_planeacion), filtrar por su dependencia
+            const isBroadEditor = ['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '')
+            if (!isBroadEditor && dependencia) {
+                // Buscamos el ID en la tabla dependencias que coincida con el nombre de nuestra oficina
+                const matchingDep = depsData?.find(d => 
+                    d.nombre.toUpperCase().trim() === dependencia.nombre.toUpperCase().trim()
+                )
+                if (matchingDep) {
+                    query = query.eq('dependencia_id', matchingDep.id)
+                } else {
+                    query = query.eq('dependencia_id', dependencia.id)
+                }
             }
 
             const { data, error } = await query.order('codigo_meta')
@@ -102,6 +109,12 @@ export default function MetasPddPage() {
 
     const handleEdit = (meta: MetasPdd | null) => {
         setEditingMeta(meta)
+
+        // Buscamos si nuestra oficina actual tiene un ID de dependencia equivalente para pre-seleccionar
+        const mappedDepId = todasDependencias.find(d => 
+            d.nombre.toUpperCase().trim() === dependencia?.nombre?.toUpperCase().trim()
+        )?.id || dependencia?.id || ''
+
         if (meta) {
             setFormData({
                 codigo_meta: meta.codigo_meta,
@@ -110,7 +123,7 @@ export default function MetasPddPage() {
                 meta_programada: meta.meta_programada?.toString() || '0',
                 meta_ejecutada: meta.meta_ejecutada?.toString() || '0',
                 observaciones: meta.observaciones || '',
-                dependencia_id: meta.dependencia_id || (dependencia?.id ?? ''),
+                dependencia_id: meta.dependencia_id || mappedDepId,
             })
         } else {
             setFormData({
@@ -120,7 +133,7 @@ export default function MetasPddPage() {
                 meta_programada: '',
                 meta_ejecutada: '',
                 observaciones: '',
-                dependencia_id: dependencia?.id ?? '',
+                dependencia_id: mappedDepId,
             })
         }
         setDialogOpen(true)
@@ -129,8 +142,21 @@ export default function MetasPddPage() {
     const handleSave = async () => {
         if (!vigenciaActual) return
 
-        const isSuperUser = ['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '')
-        const targetDependenciaId = isSuperUser ? formData.dependencia_id : dependencia?.id
+        const isBroadEditor = ['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
+                             hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', dependencia?.nombre)
+        
+        // Si es un editor autorizado (como Paola o Admin), usamos el ID seleccionado en el formulario
+        let targetDependenciaId = isBroadEditor ? formData.dependencia_id : dependencia?.id
+
+        // Si aún no tenemos ID y tenemos una oficina, intentamos el mapeo de nombres como respaldo
+        if (!targetDependenciaId && dependencia) {
+            const matchingDep = todasDependencias.find(d => 
+                d.nombre.toUpperCase().trim() === dependencia.nombre.toUpperCase().trim()
+            )
+            if (matchingDep) {
+                targetDependenciaId = matchingDep.id
+            }
+        }
 
         if (!targetDependenciaId) {
             toast.error('Debe seleccionar una dependencia o pertenecer a una')
@@ -197,7 +223,9 @@ export default function MetasPddPage() {
                     <p className="text-slate-400">Seguimiento al Plan de Desarrollo Distrital</p>
                 </div>
                 {/* Allow creating new metas only for authorized roles */}
-                {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                {/* Allow creating new metas for authorized roles or specific users */}
+                {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
+                  hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', dependencia?.nombre)) && (
                     <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500 text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Nueva Meta
@@ -218,7 +246,8 @@ export default function MetasPddPage() {
                             <TableRow>
                                 <TableHead className="w-[100px] text-slate-300">Código</TableHead>
                                 <TableHead className="min-w-[200px] text-slate-300">Descripción</TableHead>
-                                {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                 {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
+                                   hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', (userProfile as any).oficinas?.nombre)) && (
                                     <TableHead className="text-slate-300">Oficina</TableHead>
                                 )}
                                 <TableHead className="text-slate-300">Unidad</TableHead>
@@ -238,7 +267,8 @@ export default function MetasPddPage() {
                                     <TableRow key={meta.id} className="hover:bg-slate-800/50">
                                         <TableCell className="font-medium text-blue-400">{meta.codigo_meta}</TableCell>
                                         <TableCell className="text-slate-300">{meta.descripcion}</TableCell>
-                                        {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                        {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
+                                          hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', (userProfile as any).oficinas?.nombre)) && (
                                             <TableCell className="text-slate-400 text-xs">{(meta as any).dependencias?.nombre || '—'}</TableCell>
                                         )}
                                         <TableCell className="text-slate-400">{meta.unidad_medida}</TableCell>
@@ -250,7 +280,8 @@ export default function MetasPddPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                            {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
+                                              hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', (userProfile as any).oficinas?.nombre)) && (
                                                 <Button variant="ghost" size="sm" onClick={() => handleEdit(meta)}>
                                                     Editar
                                                 </Button>
@@ -282,7 +313,8 @@ export default function MetasPddPage() {
                             <Label>Código</Label>
                             <Input value={formData.codigo_meta} onChange={e => setFormData({ ...formData, codigo_meta: e.target.value })} placeholder="Ej. 1.1.2" />
                         </div>
-                        {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                        {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
+                          hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', (userProfile as any).oficinas?.nombre)) && (
                             <div className="grid gap-2">
                                 <Label>Dependencia Asignada</Label>
                                 <select

@@ -303,7 +303,7 @@ export default function SeguimientosPage() {
                             </div>
                         )}
 
-                        <Table wrapperClassName="max-h-[calc(100vh-480px)]">
+                        <Table wrapperClassName="max-h-[calc(100vh-320px)] scrollbar-thin scrollbar-thumb-slate-700">
                             <TableHeader className="sticky top-0 z-10 bg-gray-50/95 dark:bg-slate-900/95 backdrop-blur-sm">
                                 <TableRow className="border-gray-200 dark:border-slate-800 hover:bg-transparent">
                                     <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-gray-50/95 dark:bg-slate-900/95 z-20 border-r border-gray-200 dark:border-slate-800 text-gray-800 dark:text-slate-300 font-bold py-4 pl-5">

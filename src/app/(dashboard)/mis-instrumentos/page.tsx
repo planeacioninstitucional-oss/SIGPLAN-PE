@@ -45,7 +45,7 @@ export default function MisInstrumentosPage() {
 
     const [instrumentos, setInstrumentos] = useState<Instrumento[]>([])
     const [seguimientos, setSeguimientos] = useState<Seguimiento[]>([])
-    const [userProfile, setUserProfile] = useState<{ id: string; rol: any; dependencia_id: string | null } | null>(null)
+    const [userProfile, setUserProfile] = useState<{ id: string; rol: any; oficina_id: string | null } | null>(null)
     const [misDependenciaIds, setMisDependenciaIds] = useState<string[]>([])
     const [misDependencias, setMisDependencias] = useState<any[]>([])
     const [userLoaded, setUserLoaded] = useState(false)
@@ -114,10 +114,12 @@ export default function MisInstrumentosPage() {
 
                 let allInsts = data ?? []
 
-                if (userProfile?.dependencia_id) {
-                    const { data: todasDeps } = await supabase.from('dependencias').select('*')
-                    if (todasDeps) {
-                        const misDepsData = getMisDependencias(userProfile.dependencia_id, todasDeps)
+                if (userProfile?.oficina_id) {
+                    const { data: todosProcesos } = await supabase.from('procesos_institucionales').select('*')
+                    const { data: todasOficinas } = await supabase.from('oficinas').select('*')
+                    
+                    if (todosProcesos && todasOficinas) {
+                        const misDepsData = getMisDependencias(userProfile.oficina_id, todosProcesos, todasOficinas)
                         setMisDependenciaIds(misDepsData.map(d => d.id))
                         setMisDependencias(misDepsData)
 
@@ -268,7 +270,7 @@ export default function MisInstrumentosPage() {
                 </div>
             )}
 
-            {selectedCell && userProfile && vigenciaActual && userProfile.dependencia_id && (
+            {selectedCell && userProfile && vigenciaActual && userProfile.oficina_id && (
                 <SeguimientoDialog
                     open={dialogOpen}
                     onOpenChange={setDialogOpen}
