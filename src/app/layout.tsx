@@ -8,8 +8,8 @@ import { Toaster } from 'sonner'
 const font = Space_Grotesk({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-    title: 'PGE-INFI: Operative Grid',
-    description: 'Plataforma de Gestión Estratégica - Sistema de Gestión',
+    title: 'INFIBAGUÉ - Planeación',
+    description: 'Plataforma Estratégica',
     icons: {
         icon: '/favicon.ico',
     },
@@ -25,12 +25,12 @@ export default function RootLayout({
             <body className={font.className}>
                 <ThemeProvider
                     attribute="class"
-                    defaultTheme="dark"
-                    enableSystem={false}
+                    defaultTheme="light"
+                    enableSystem
                     disableTransitionOnChange
                 >
                     <AppShell>{children}</AppShell>
-                    <Toaster position="top-right" richColors theme="dark" />
+                    <Toaster position="top-right" richColors />
                 </ThemeProvider>
             </body>
         </html>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Lock, LayoutGrid, BarChart3, ShieldCheck, Database } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -35,10 +36,10 @@ export default function LandingPage() {
             {/* Header */}
             <header className="relative z-10 flex items-center justify-between px-6 py-6 max-w-7xl mx-auto w-full">
                 <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-                        <LayoutGrid className="h-5 w-5 text-primary-foreground" />
+                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-lg p-1">
+                        <Image src="/logo.png" alt="Logo" width={24} height={24} className="object-contain" />
                     </div>
-                    <span className="text-xl font-bold tracking-tight text-white font-space">PGE-INFI</span>
+                    <span className="text-xl font-bold tracking-tight text-white font-space whitespace-nowrap">INFIBAGUÉ - Planeación</span>
                 </div>
 
                 <div className="flex items-center gap-4">

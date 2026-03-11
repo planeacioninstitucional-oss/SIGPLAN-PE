@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Building2, Eye, EyeOff, Loader2, Lock, ShieldCheck } from 'lucide-react'
@@ -52,13 +53,13 @@ export default function UpdatePasswordPage() {
                 </div>
 
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
-                            <Building2 className="w-6 h-6 text-white" />
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-xl bg-white p-2 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.5)]">
+                            <Image src="/logo.png" alt="Logo INFIBAGUE" width={80} height={80} className="object-contain" priority />
                         </div>
                         <div>
                             <p className="text-white font-bold text-lg leading-none">INFIBAGUÉ</p>
-                            <p className="text-blue-400 text-xs">Instituto de Ibagué</p>
+                            <p className="text-blue-400 text-xs mt-1">Planeación Estratégica</p>
                         </div>
                     </div>
                 </div>
@@ -86,13 +87,12 @@ export default function UpdatePasswordPage() {
             <div className="flex-1 flex items-center justify-center p-8">
                 <div className="w-full max-w-md space-y-8">
                     {/* Mobile logo */}
-                    <div className="lg:hidden flex items-center gap-3 mb-8">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
-                            <Building2 className="w-6 h-6 text-white" />
+                    <div className="lg:hidden flex flex-col items-center gap-4 mb-8">
+                        <div className="w-20 h-20 rounded-2xl bg-white p-2 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.6)]">
+                            <Image src="/logo.png" alt="Logo INFIBAGUE" width={80} height={80} className="object-contain" priority />
                         </div>
-                        <div>
-                            <p className="text-white font-bold text-lg">INFIBAGUÉ</p>
-                            <p className="text-blue-400 text-xs">Plataforma PGE-INFI</p>
+                        <div className="text-center">
+                            <p className="text-white font-black text-2xl tracking-wide">INFIBAGUÉ</p>
                         </div>
                     </div>
 

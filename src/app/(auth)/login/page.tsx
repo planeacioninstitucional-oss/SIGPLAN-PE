@@ -62,7 +62,6 @@ export default function LoginPage() {
                         </div>
                         <div>
                             <p className="text-white font-bold text-lg leading-none">INFIBAGUÉ</p>
-                            <p className="text-blue-400 text-xs">Instituto de Ibagué</p>
                         </div>
                     </div>
                 </div>
@@ -70,12 +69,12 @@ export default function LoginPage() {
                 <div className="relative z-10 space-y-6">
                     <div>
                         <h1 className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.1] tracking-tight drop-shadow-2xl font-sans pb-2">
-                            Plataforma de<br />
+                            Plataforma<br />
                             <span className="bg-gradient-to-r from-blue-300 via-cyan-300 to-teal-400 bg-clip-text text-transparent drop-shadow-xl inline-block mt-2">
-                                Gestión Estratégica
+                                Estratégica
                             </span>
                         </h1>
-                        <p className="mt-4 text-slate-400 text-sm leading-relaxed max-w-sm">
+                        <p className="mt-4 text-slate-300 text-base font-medium leading-relaxed max-w-md tracking-wide">
                             Centraliza planeación institucional, seguimiento de riesgos, proyectos de inversión y alistamiento de auditorías en un solo lugar.
                         </p>
                     </div>
@@ -87,9 +86,9 @@ export default function LoginPage() {
                             { label: 'Instrumentos', value: '11' },
                             { label: 'Vigencia', value: '2026' },
                         ].map((stat) => (
-                            <div key={stat.label} className="bg-white/5 border border-white/10 rounded-lg p-3">
-                                <p className="text-2xl font-bold text-blue-400">{stat.value}</p>
-                                <p className="text-xs text-slate-400">{stat.label}</p>
+                            <div key={stat.label} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                                <p className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">{stat.value}</p>
+                                <p className="text-xs font-semibold text-slate-300 mt-1 uppercase tracking-wider">{stat.label}</p>
                             </div>
                         ))}
                     </div>
@@ -111,12 +110,11 @@ export default function LoginPage() {
                         </div>
                         <div className="text-center">
                             <p className="text-white font-black text-2xl tracking-wide">INFIBAGUÉ</p>
-                            <p className="text-cyan-400 text-sm font-medium">Plataforma PGE-INFI</p>
                         </div>
                     </div>
 
                     <div>
-                        <h2 className="text-4xl font-extrabold text-white mb-2">Iniciar menú</h2>
+                        <h2 className="text-4xl font-extrabold text-white mb-2">Iniciar sesión</h2>
                         <p className="text-blue-300 text-base">Accede con tus credenciales institucionales</p>
                     </div>
 

@@ -99,39 +99,39 @@ export default function PamPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Plan Acción Municipal</h1>
-                    <p className="text-slate-400">Seguimiento a metas y ejes estratégicos</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Plan Acción Municipal</h1>
+                    <p className="text-gray-500 dark:text-slate-400">Seguimiento a metas y ejes estratégicos</p>
                 </div>
-                {(['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '')) && (
-                    <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500">
+                {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                    <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500 text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Nuevo Registro
                     </Button>
                 )}
             </div>
 
-            <Card className="card-glass border-slate-800">
+            <Card className="card-glass border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
                 <CardHeader>
-                    <CardTitle className="text-slate-200">Registros PAM</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-gray-900 dark:text-slate-200">Registros PAM</CardTitle>
+                    <CardDescription className="text-gray-500 dark:text-slate-400">
                         {records.length} registros en la vigencia {vigenciaActual.anio}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="relative overflow-x-auto">
                         <Table>
-                            <TableHeader className="bg-slate-900/90">
-                                <TableRow>
-                                    <TableHead className="text-slate-300">Eje</TableHead>
-                                    <TableHead className="min-w-[200px] text-slate-300">Programa / Meta PDD</TableHead>
+                            <TableHeader className="bg-gray-50/90 dark:bg-slate-900/90 border-b border-gray-200 dark:border-slate-800">
+                                <TableRow className="border-gray-200 dark:border-slate-800">
+                                    <TableHead className="text-gray-800 dark:text-slate-300 font-semibold">Eje</TableHead>
+                                    <TableHead className="min-w-[200px] text-gray-800 dark:text-slate-300 font-semibold">Programa / Meta PDD</TableHead>
                                     {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
-                                        <TableHead className="text-slate-300">Oficina</TableHead>
+                                        <TableHead className="text-gray-800 dark:text-slate-300 font-semibold">Oficina</TableHead>
                                     )}
-                                    <TableHead className="text-right text-slate-300">Meta Vig.</TableHead>
-                                    <TableHead className="text-right text-slate-300">Logro</TableHead>
-                                    <TableHead className="text-center text-slate-300">% Avance</TableHead>
-                                    <TableHead className="text-center text-slate-300">Estado</TableHead>
-                                    <TableHead className="text-right text-slate-300">Acciones</TableHead>
+                                    <TableHead className="text-right text-gray-800 dark:text-slate-300 font-semibold">Meta Vig.</TableHead>
+                                    <TableHead className="text-right text-gray-800 dark:text-slate-300 font-semibold">Logro</TableHead>
+                                    <TableHead className="text-center text-gray-800 dark:text-slate-300 font-semibold">% Avance</TableHead>
+                                    <TableHead className="text-center text-gray-800 dark:text-slate-300 font-semibold">Estado</TableHead>
+                                    <TableHead className="text-right text-gray-800 dark:text-slate-300 font-semibold">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -141,23 +141,23 @@ export default function PamPage() {
                                         : 0
 
                                     return (
-                                        <TableRow key={rec.id} className="hover:bg-slate-800/50">
-                                            <TableCell className="font-medium text-slate-400">{rec.eje_estrategico}</TableCell>
-                                            <TableCell className="text-slate-300">
-                                                <div className="font-medium text-blue-400">{rec.programa}</div>
-                                                <div className="text-xs text-slate-500 line-clamp-2">{rec.meta_pdd}</div>
+                                        <TableRow key={rec.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 border-gray-200 dark:border-slate-800">
+                                            <TableCell className="font-medium text-gray-600 dark:text-slate-400">{rec.eje_estrategico}</TableCell>
+                                            <TableCell className="text-gray-900 dark:text-slate-300">
+                                                <div className="font-medium text-blue-600 dark:text-blue-400">{rec.programa}</div>
+                                                <div className="text-xs text-gray-500 dark:text-slate-500 line-clamp-2">{rec.meta_pdd}</div>
                                             </TableCell>
                                             {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
-                                                <TableCell className="text-slate-400 text-xs">{(rec as any).dependencias?.nombre || '—'}</TableCell>
+                                                <TableCell className="text-gray-600 dark:text-slate-400 text-xs">{(rec as any).dependencias?.nombre || '—'}</TableCell>
                                             )}
-                                            <TableCell className="text-right text-slate-300">
+                                            <TableCell className="text-right text-gray-900 dark:text-slate-300">
                                                 {rec.meta_vigencia}
                                             </TableCell>
-                                            <TableCell className="text-right text-slate-300">
+                                            <TableCell className="text-right text-gray-900 dark:text-slate-300">
                                                 {rec.logro_vigencia}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <span className={`text-xs ${percent >= 100 ? 'text-green-400' : 'text-slate-400'}`}>
+                                                <span className={`text-xs ${percent >= 100 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-slate-400'}`}>
                                                     {percent.toFixed(1)}%
                                                 </span>
                                             </TableCell>
@@ -165,21 +165,23 @@ export default function PamPage() {
                                                 <SemaforoCell estado={rec.estado} />
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(rec)}>
-                                                        <Edit className="w-4 h-4 text-slate-400" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(rec.id)}>
-                                                        <Trash2 className="w-4 h-4 text-red-400" />
-                                                    </Button>
-                                                </div>
+                                                {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(rec)} className="hover:bg-gray-200 dark:hover:bg-slate-700">
+                                                            <Edit className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(rec.id)} className="hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                            <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     )
                                 })}
                                 {records.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-8 text-slate-500">
+                                        <TableCell colSpan={8} className="text-center py-8 text-gray-500 dark:text-slate-500">
                                             No hay registros PAM.
                                         </TableCell>
                                     </TableRow>
@@ -191,7 +193,7 @@ export default function PamPage() {
             </Card>
 
             {
-                (['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '')) && (
+                (['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '')) && (
                     <PamDialog
                         open={dialogOpen}
                         onOpenChange={setDialogOpen}

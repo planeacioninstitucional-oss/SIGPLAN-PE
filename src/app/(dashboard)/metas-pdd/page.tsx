@@ -197,8 +197,8 @@ export default function MetasPddPage() {
                     <p className="text-slate-400">Seguimiento al Plan de Desarrollo Distrital</p>
                 </div>
                 {/* Allow creating new metas only for authorized roles */}
-                {['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '') && (
-                    <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500">
+                {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
+                    <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500 text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Nueva Meta
                     </Button>
@@ -250,7 +250,7 @@ export default function MetasPddPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            {['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile?.rol || '') && (
+                                            {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
                                                 <Button variant="ghost" size="sm" onClick={() => handleEdit(meta)}>
                                                     Editar
                                                 </Button>

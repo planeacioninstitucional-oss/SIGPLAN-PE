@@ -39,7 +39,8 @@ export function hasSidebarAccess(itemName: string, nombre_completo: string | nul
                 'DIRECCIÓN OPERATIVA Y COMERCIAL',
                 'DIRECCION OPERATIVA Y COMERCIAL',
                 'DIRECCIÓN DE PROYECTOS Y SERVICIOS FINANCIEROS',
-                'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS'
+                'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS',
+                'DIRECCIÓN FINANCIERA', 'DIRECCION FINANCIERA'
             ];
             // Permitimos si la oficina del jefe coincide con alguna de la lista
             return ofisPDD.some(o => oficinaUpper.includes(o) || o.includes(oficinaUpper));
@@ -53,7 +54,8 @@ export function hasSidebarAccess(itemName: string, nombre_completo: string | nul
                 'DIRECCIÓN OPERATIVA Y COMERCIAL',
                 'DIRECCION OPERATIVA Y COMERCIAL',
                 'DIRECCIÓN DE PROYECTOS Y SERVICIOS FINANCIEROS',
-                'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS'
+                'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS',
+                'DIRECCIÓN FINANCIERA', 'DIRECCION FINANCIERA'
             ];
             // Permitimos si la oficina del jefe coincide con alguna de la lista
             return ofisPAM.some(o => oficinaUpper.includes(o) || o.includes(oficinaUpper));
@@ -122,4 +124,52 @@ export function getDependenciasParaInstrumento(instrumentoNombre: string, todasD
 
     // Si no es un instrumento especial, retorna todas
     return todasDependencias;
+}
+
+export function formatDependenciaName(name: string | null | undefined): string {
+    if (!name) return '';
+    const nameUpper = name.toUpperCase().trim();
+    if (nameUpper === 'FINANCIERA' || nameUpper === 'DIRECCION FINANCIERA' || nameUpper === 'DIRECCIÓN FINANCIERA') return 'Dirección Financiera';
+    if (nameUpper === 'HUMANA' || nameUpper === 'GESTION HUMANA' || nameUpper === 'GESTIÓN HUMANA') return 'Gestión Humana';
+    if (nameUpper === 'JURIDICA' || nameUpper === 'JURÍDICA' || nameUpper === 'GESTION JURIDICA' || nameUpper === 'GESTIÓN JURÍDICA') return 'Gestión Jurídica';
+    if (nameUpper.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) return 'Dirección de Proyectos y Servicios Financieros';
+    if (nameUpper.includes('OPERATIVA Y COMERCIAL')) return 'Dirección Operativa y Comercial';
+    return name;
+}
+
+export function getMisDependencias(miDependenciaId: string, todasLasDependencias: any[]): any[] {
+    if (!miDependenciaId || !todasLasDependencias || todasLasDependencias.length === 0) return [];
+
+    const baseDep = todasLasDependencias.find(d => d.id === miDependenciaId);
+    if (!baseDep) return [];
+
+    const nameUpper = (baseDep.nombre || '').toUpperCase().trim();
+    let subProcesos: string[] = [];
+
+    if (nameUpper.includes('FINANCIERA') || nameUpper.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) {
+        subProcesos = [
+            'BICICLETAS RUEDA POR IBAGUÉ', 'RUEDA POR IBAGUE',
+            'COMPLEJO CULTURAL PANÓPTICO', 'CULTURAL PANOPTICO',
+            'GESTIÓN DE OPERACIONES FINANCIERAS', 'OPERACIONES FINANCIERAS',
+            'GESTIÓN COMERCIAL', 'COMERCIAL'
+        ];
+    } else if (nameUpper.includes('OPERATIVA Y COMERCIAL') || nameUpper.includes('OPERACIONES')) {
+        subProcesos = [
+            'ALUMBRADO PÚBLICO', 'ALUMBRADO PUBLICO',
+            'PARQUES Y ZONAS VERDES',
+            'PLAZAS DE MERCADO',
+            'RELLENO SANITARIO'
+        ];
+    }
+
+    const results = [baseDep];
+
+    for (const dep of todasLasDependencias) {
+        if (dep.id === baseDep.id) continue;
+        if (subProcesos.some(sp => (dep.nombre || '').toUpperCase().includes(sp))) {
+            results.push(dep);
+        }
+    }
+
+    return results;
 }

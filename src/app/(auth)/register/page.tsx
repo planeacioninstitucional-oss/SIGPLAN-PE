@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import {
@@ -120,34 +121,46 @@ export default function RegisterPage() {
     return (
         <div className="min-h-screen flex bg-[hsl(222,47%,5%)] overflow-hidden">
 
-            {/* Panel izquierdo — Branding */}
-            <div className="hidden lg:flex flex-col justify-between w-[45%] relative p-12 bg-gradient-to-br from-blue-950/80 to-slate-950">
-                <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl" />
-                    <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl" />
+            {/* Left branding panel */}
+            <div className="hidden lg:flex flex-col justify-between w-[45%] relative p-12">
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                    <Image
+                        src="/mapa.jpeg"
+                        alt="Fondo Ibagué"
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                    {/* Dark gradient overlay to ensure text is readable */}
+                    <div className="absolute inset-0 bg-blue-950/80 bg-gradient-to-br from-blue-950/85 to-slate-950/90" />
+                </div>
+                {/* Background glow */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/30 rounded-full blur-3xl opacity-50" />
+                    <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-cyan-600/20 rounded-full blur-3xl opacity-50" />
                 </div>
 
-                {/* Logo */}
-                <div className="relative z-10 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
-                        <Building2 className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                        <p className="text-white font-bold text-lg leading-none">INFIBAGUÉ</p>
-                        <p className="text-blue-400 text-xs">Instituto de Ibagué</p>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 rounded-xl bg-white p-2 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.6)]">
+                            <Image src="/logo.png" alt="Logo INFIBAGUE" width={80} height={80} className="object-contain" priority />
+                        </div>
+                        <div>
+                            <p className="text-white font-bold text-lg leading-none">INFIBAGUÉ</p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Texto */}
                 <div className="relative z-10 space-y-6">
                     <div>
-                        <h1 className="text-4xl font-bold text-white leading-tight">
-                            Registro al<br />
-                            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                                Centro de Comando
+                        <h1 className="text-5xl lg:text-7xl font-extrabold text-white leading-[1.1] tracking-tight drop-shadow-2xl font-sans pb-2">
+                            Registro<br />
+                            <span className="bg-gradient-to-r from-blue-300 via-cyan-300 to-teal-400 bg-clip-text text-transparent drop-shadow-xl inline-block mt-2">
+                                Plataforma
                             </span>
                         </h1>
-                        <p className="mt-4 text-slate-400 text-sm leading-relaxed max-w-sm">
+                        <p className="mt-4 text-slate-300 text-base font-medium leading-relaxed max-w-md tracking-wide">
                             Tu cuenta queda vinculada automáticamente a los procesos
                             institucionales de tu oficina. Sin configuración manual.
                         </p>
@@ -189,14 +202,12 @@ export default function RegisterPage() {
             <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto">
                 <div className="w-full max-w-md space-y-5 py-8">
 
-                    {/* Logo móvil */}
-                    <div className="lg:hidden flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center">
-                            <Building2 className="w-6 h-6 text-white" />
+                    <div className="lg:hidden flex flex-col items-center gap-4 mb-10 pb-6 border-b border-white/10">
+                        <div className="w-24 h-24 rounded-2xl bg-white p-3 flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.6)] animate-pulse">
+                            <Image src="/logo.png" alt="Logo INFIBAGUE" width={80} height={80} className="object-contain" priority />
                         </div>
-                        <div>
-                            <p className="text-white font-bold text-lg">INFIBAGUÉ</p>
-                            <p className="text-blue-400 text-xs">Plataforma SIGPLAN-PE</p>
+                        <div className="text-center">
+                            <p className="text-white font-black text-2xl tracking-wide">INFIBAGUÉ</p>
                         </div>
                     </div>
 

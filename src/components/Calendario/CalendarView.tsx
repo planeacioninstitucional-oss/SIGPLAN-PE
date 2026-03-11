@@ -37,7 +37,9 @@ export default function Calendar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-    const [userRole, setUserRole] = useState<'contratista' | 'funcionario'>('contratista'); // Mock role for now
+    const [userRole, setUserRole] = useState<'contratista' | 'funcionario'>('funcionario'); 
+    const [realUserRol, setRealUserRol] = useState<string | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const [allUsers, setAllUsers] = useState<Perfil[]>([]);
@@ -45,7 +47,7 @@ export default function Calendar() {
     // Form states
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [funcionarioNotes, setFuncionarioNotes] = useState('');
+    const [newNote, setNewNote] = useState('');
     const [selectedAssignees, setSelectedAssignees] = useState<string[]>([]); // array of User IDs
     const [eventType, setEventType] = useState<'note' | 'task' | 'meeting'>('task');
     const [isSaving, setIsSaving] = useState(false);
@@ -63,6 +65,31 @@ export default function Calendar() {
         } catch (error) {
             console.error('Error fetching users:', error);
             toast.error('Error al cargar la lista de usuarios');
+        }
+    }, [supabase]);
+
+    const initCurrentUser = useCallback(async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setCurrentUserId(user.id);
+                const { data: perfil } = await supabase
+                    .from('perfiles')
+                    .select('rol')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (perfil) {
+                    setRealUserRol(perfil.rol);
+                    if (['super_admin', 'equipo_planeacion'].includes(perfil.rol)) {
+                        setUserRole('contratista');
+                    } else {
+                        setUserRole('funcionario');
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching current user:', error);
         }
     }, [supabase]);
 
@@ -117,9 +144,10 @@ export default function Calendar() {
     }, [supabase]);
 
     useEffect(() => {
+        initCurrentUser();
         fetchUsers();
         fetchEvents();
-    }, [fetchUsers, fetchEvents]);
+    }, [initCurrentUser, fetchUsers, fetchEvents]);
 
     const handleDateClick = (arg: DateClickArg) => {
         if (userRole === 'funcionario') return; // Funcionario cannot add base events
@@ -134,7 +162,7 @@ export default function Calendar() {
             setSelectedEvent(event);
             setTitle(event.title);
             setDescription(event.extendedProps?.description || '');
-            setFuncionarioNotes(event.extendedProps?.funcionario_notes || '');
+            setNewNote('');
 
             const assigneeIds = event.extendedProps?.assignees?.map(a => a.id) || [];
             setSelectedAssignees(assigneeIds);
@@ -158,15 +186,27 @@ export default function Calendar() {
 
         setIsSaving(true);
         try {
+            // Construir el registro de comentarios
+            let finalNotes = selectedEvent?.extendedProps?.funcionario_notes || '';
+            if (newNote.trim() && userRole === 'funcionario') {
+                const me = allUsers.find(u => u.id === currentUserId);
+                const myName = me ? me.nombre_completo : 'Funcionario';
+                const dateStr = new Date().toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' });
+                const noteEntry = `👤 ${myName} (${dateStr}):\n"${newNote.trim()}"`;
+                finalNotes = finalNotes ? `${finalNotes}\n\n${noteEntry}` : noteEntry;
+            } else if (userRole === 'contratista') {
+                finalNotes = selectedEvent?.extendedProps?.funcionario_notes || '';
+            }
+
             // -- FUNCIONARIO FLOW: ONLY UPDATE NOTES --
             if (userRole === 'funcionario' && selectedEvent) {
                 const { error } = await supabase
                     .from('calendar_events')
-                    .update({ funcionario_notes: funcionarioNotes })
+                    .update({ funcionario_notes: finalNotes })
                     .eq('id', selectedEvent.id);
 
                 if (error) throw error;
-                toast.success('Notas actualizadas correctamente');
+                toast.success('Comentario registrado correctamente');
                 await fetchEvents();
                 closeModal();
                 return;
@@ -181,7 +221,7 @@ export default function Calendar() {
                 all_day: true, // simplified
                 event_type: eventType,
                 description,
-                funcionario_notes: funcionarioNotes, // preserve existing or empty
+                funcionario_notes: finalNotes, // preserve existing or empty
             };
 
             if (selectedEvent) {
@@ -271,14 +311,17 @@ export default function Calendar() {
     const resetForm = () => {
         setTitle('');
         setDescription('');
-        setFuncionarioNotes('');
+        setNewNote('');
         setSelectedAssignees([]);
         setEventType('task');
     };
 
     const renderEventContent = (eventInfo: any) => {
         const type = eventInfo.event.extendedProps.type;
-        const assignees = eventInfo.event.extendedProps.assignees || [];
+        const rawAssignees = eventInfo.event.extendedProps.assignees || [];
+        
+        // Filter out nulls and users without names to avoid crashes
+        const assignees = rawAssignees.filter((a: any) => a && a.nombre_completo);
 
         let bgColor = 'bg-blue-500';
         if (type === 'note') bgColor = 'bg-amber-500';
@@ -293,7 +336,7 @@ export default function Calendar() {
                     <div className="flex -space-x-1.5 mt-1 overflow-hidden" title={assignees.map((a: any) => a.nombre_completo).join(', ')}>
                         {assignees.slice(0, 3).map((assignee: Perfil) => (
                             <div key={assignee.id} className="w-4 h-4 rounded-full bg-black/20 flex items-center justify-center text-[8px] uppercase border border-white/20">
-                                {assignee.nombre_completo.substring(0, 2)}
+                                {assignee.nombre_completo?.substring(0, 2) || 'U'}
                             </div>
                         ))}
                         {assignees.length > 3 && (
@@ -309,31 +352,33 @@ export default function Calendar() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-theme(spacing.16))] py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
-            <div className="mb-6 flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div className="mb-6 flex justify-between items-center bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-4 rounded-xl shadow-sm">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
                         <CalendarIcon className="w-6 h-6 text-primary" />
                         Calendario Institucional
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">Gestiona eventos, seguimientos y notas importantes</p>
+                    <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Gestiona eventos, seguimientos y notas importantes</p>
                 </div>
 
                 <div className="flex items-center gap-4">
                     {/* Simulator switch */}
-                    <div className="flex items-center gap-2 text-sm bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-                        <span className="text-gray-500 font-medium transition-all">Modo Simulador:</span>
-                        <select
-                            value={userRole}
-                            onChange={(e) => {
-                                setUserRole(e.target.value as any);
-                                toast.success(`Modo cambiado a: ${e.target.value}`);
-                            }}
-                            className="bg-transparent font-semibold focus:outline-none w-min border-none text-primary cursor-pointer text-sm"
-                        >
-                            <option value="contratista">Contratista</option>
-                            <option value="funcionario">Funcionario</option>
-                        </select>
-                    </div>
+                    {realUserRol === 'super_admin' && (
+                        <div className="flex items-center gap-2 text-sm bg-gray-50 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700">
+                            <span className="text-gray-500 dark:text-slate-400 font-medium transition-all">Modo Simulador:</span>
+                            <select
+                                value={userRole}
+                                onChange={(e) => {
+                                    setUserRole(e.target.value as any);
+                                    toast.success(`Modo cambiado a: ${e.target.value}`);
+                                }}
+                                className="bg-transparent font-semibold focus:outline-none w-min border-none text-primary cursor-pointer text-sm"
+                            >
+                                <option value="contratista" className="bg-white dark:bg-slate-900">Editor (Admin, Planeación)</option>
+                                <option value="funcionario" className="bg-white dark:bg-slate-900">Funcionario (Sólo notas)</option>
+                            </select>
+                        </div>
+                    )}
 
                     {userRole === 'contratista' && (
                         <button
@@ -350,24 +395,42 @@ export default function Calendar() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-white p-2 sm:p-6 rounded-xl shadow-sm border border-gray-200 overflow-hidden main-calendar-wrapper relative z-0">
+            <div className="flex-1 bg-white dark:bg-slate-900/50 p-2 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-800 overflow-hidden main-calendar-wrapper relative z-0">
                 {isLoading && (
-                    <div className="absolute inset-0 z-10 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                    <div className="absolute inset-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-center">
                         <Loader2 className="w-8 h-8 text-primary animate-spin" />
                     </div>
                 )}
                 <style dangerouslySetInnerHTML={{
                     __html: `
-                    .fc { --fc-button-bg-color: #0f172a; --fc-button-border-color: #0f172a; --fc-button-hover-bg-color: #1e293b; --fc-button-hover-border-color: #1e293b; --fc-button-active-bg-color: #334155; --fc-event-border-color: transparent; --fc-event-bg-color: transparent; }
-                    .fc-theme-standard td, .fc-theme-standard th { border-color: #f1f5f9; }
+                    /* ===== LIGHT MODE calendar styles ===== */
+                    .fc { --fc-button-bg-color: #3b82f6; --fc-button-border-color: #3b82f6; --fc-button-hover-bg-color: #2563eb; --fc-button-hover-border-color: #2563eb; --fc-button-active-bg-color: #1d4ed8; --fc-event-border-color: transparent; --fc-event-bg-color: transparent; --fc-button-text-color: #fff; }
+                    .fc-theme-standard td, .fc-theme-standard th { border-color: #e2e8f0; }
                     .fc-col-header-cell { padding: 12px 0 !important; background-color: #f8fafc; font-weight: 600; text-transform: capitalize; color: #475569; }
                     .fc-daygrid-day-number { font-weight: 500; padding: 8px !important; color: #334155; transition: all 0.2s; }
                     .fc-daygrid-day:hover { background-color: #f8fafc; cursor: pointer; }
                     .fc .fc-toolbar-title { font-size: 1.25rem !important; font-weight: 700 !important; color: #0f172a; text-transform: capitalize; }
-                    .fc-day-today { background-color: #f0fdf4 !important; }
-                    .fc-day-today .fc-daygrid-day-number { background-color: #22c55e; color: white !important; border-radius: 999px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; margin: 4px; padding: 0 !important; }
+                    .fc-day-today { background-color: #eff6ff !important; }
+                    .fc-day-today .fc-daygrid-day-number { background-color: #3b82f6; color: white !important; border-radius: 999px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; margin: 4px; padding: 0 !important; }
                     .fc-event { margin: 2px 4px !important; }
                     .fc-daygrid-event-harness { margin-top: 2px; }
+                    .fc-daygrid-day-top { color: #334155; }
+                    .fc-timegrid-slot-label-cushion { color: #64748b; }
+                    .fc-timegrid-axis-cushion { color: #64748b; }
+                    .fc .fc-button { border-radius: 8px !important; font-weight: 600 !important; }
+
+                    /* ===== DARK MODE calendar styles ===== */
+                    .dark .fc { --fc-button-bg-color: #0f172a; --fc-button-border-color: #1e293b; --fc-button-hover-bg-color: #1e293b; --fc-button-hover-border-color: #334155; --fc-button-active-bg-color: #3b82f6; --fc-event-border-color: transparent; --fc-event-bg-color: transparent; --fc-button-text-color: #cbd5e1; }
+                    .dark .fc-theme-standard td, .dark .fc-theme-standard th { border-color: #1e293b; }
+                    .dark .fc-col-header-cell { background-color: #0f172a; color: #94a3b8; }
+                    .dark .fc-daygrid-day-number { color: #cbd5e1; }
+                    .dark .fc-daygrid-day:hover { background-color: #1e293b; }
+                    .dark .fc .fc-toolbar-title { color: #f8fafc !important; }
+                    .dark .fc-day-today { background-color: #1e293b !important; }
+                    .dark .fc-day-today .fc-daygrid-day-number { background-color: #3b82f6; }
+                    .dark .fc-daygrid-day-top { color: #cbd5e1; }
+                    .dark .fc-timegrid-slot-label-cushion { color: #94a3b8; }
+                    .dark .fc-timegrid-axis-cushion { color: #94a3b8; }
                 `}} />
                 <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -392,15 +455,15 @@ export default function Calendar() {
             {/* Modal for Event Details/Creation */}
             {
                 isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                            <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50 shrink-0">
-                                <h2 className="text-xl font-semibold text-gray-900">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                            <div className="flex justify-between items-center p-5 border-b border-gray-100 dark:border-white/10 bg-gray-50/50 dark:bg-transparent shrink-0">
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                                     {selectedEvent ? (userRole === 'contratista' ? 'Editar Evento' : (userRole === 'funcionario' ? 'Detalles y Notas' : 'Detalles de Evento')) : 'Nuevo Evento'}
                                 </h2>
                                 <button
                                     onClick={closeModal}
-                                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors"
+                                    className="text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 p-2 rounded-full transition-colors"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
@@ -410,12 +473,12 @@ export default function Calendar() {
                                 <div className="space-y-4">
                                     {/* Title */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Título</label>
                                         <input
                                             type="text"
                                             required={userRole === 'contratista'}
                                             disabled={userRole === 'funcionario'}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+                                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:bg-gray-50 dark:disabled:bg-slate-800/50 disabled:text-gray-500 dark:disabled:text-slate-500 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                                             placeholder="Ej. Revisión de metas PDD..."
                                             value={title}
                                             onChange={(e) => setTitle(e.target.value)}
@@ -424,31 +487,30 @@ export default function Calendar() {
 
                                     {/* Event Type */}
                                     <div className="flex gap-4">
-                                        <label className={`flex-1 flex flex-col items-center justify-center p-3 border rounded-xl transition-all ${eventType === 'task' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'hover:bg-gray-50 border-gray-200 text-gray-500'} ${userRole === 'funcionario' && 'opacity-70 pointer-events-none'}`}>
+                                        <label className={`flex-1 flex flex-col items-center justify-center p-3 border rounded-xl transition-all ${eventType === 'task' ? 'bg-blue-50 dark:bg-blue-900/40 border-blue-200 dark:border-blue-500/50 text-blue-700 dark:text-blue-400' : 'bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'} ${userRole === 'funcionario' && 'opacity-70 pointer-events-none'}`}>
                                             <input type="radio" className="sr-only" checked={eventType === 'task'} onChange={() => setEventType('task')} />
                                             <Clock className="w-5 h-5 mb-1" />
                                             <span className="text-xs font-semibold">Tarea</span>
                                         </label>
-                                        <label className={`flex-1 flex flex-col items-center justify-center p-3 border rounded-xl transition-all ${eventType === 'meeting' ? 'bg-purple-50 border-purple-200 text-purple-700' : 'hover:bg-gray-50 border-gray-200 text-gray-500'} ${userRole === 'funcionario' && 'opacity-70 pointer-events-none'}`}>
+                                        <label className={`flex-1 flex flex-col items-center justify-center p-3 border rounded-xl transition-all ${eventType === 'meeting' ? 'bg-purple-50 dark:bg-purple-900/40 border-purple-200 dark:border-purple-500/50 text-purple-700 dark:text-purple-400' : 'bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'} ${userRole === 'funcionario' && 'opacity-70 pointer-events-none'}`}>
                                             <input type="radio" className="sr-only" checked={eventType === 'meeting'} onChange={() => setEventType('meeting')} />
                                             <UserIcon className="w-5 h-5 mb-1" />
                                             <span className="text-xs font-semibold">Reunión</span>
                                         </label>
-                                        <label className={`flex-1 flex flex-col items-center justify-center p-3 border rounded-xl transition-all ${eventType === 'note' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'hover:bg-gray-50 border-gray-200 text-gray-500'} ${userRole === 'funcionario' && 'opacity-70 pointer-events-none'}`}>
+                                        <label className={`flex-1 flex flex-col items-center justify-center p-3 border rounded-xl transition-all ${eventType === 'note' ? 'bg-amber-50 dark:bg-amber-900/40 border-amber-200 dark:border-amber-500/50 text-amber-700 dark:text-amber-400' : 'bg-gray-50 dark:bg-slate-800/50 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'} ${userRole === 'funcionario' && 'opacity-70 pointer-events-none'}`}>
                                             <input type="radio" className="sr-only" checked={eventType === 'note'} onChange={() => setEventType('note')} />
                                             <AlignLeft className="w-5 h-5 mb-1" />
                                             <span className="text-xs font-semibold">Nota</span>
                                         </label>
                                     </div>
 
-                                    {/* Date display */}
-                                    <div className="flex items-center gap-3 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-slate-200 bg-gray-50 dark:bg-slate-800/40 p-3 rounded-lg border border-gray-100 dark:border-slate-700">
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary">
                                             <CalendarIcon className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <span className="block text-xs font-medium text-gray-400">Fecha seleccionada</span>
-                                            <span className="font-semibold text-gray-700">
+                                            <span className="block text-xs font-medium text-gray-400 dark:text-slate-400">Fecha seleccionada</span>
+                                            <span className="font-semibold text-gray-700 dark:text-white capitalize">
                                                 {selectedDate
                                                     ? selectedDate.toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
                                                     : selectedEvent?.start
@@ -458,29 +520,28 @@ export default function Calendar() {
                                         </div>
                                     </div>
 
-                                    {/* Assignees Multi-select Dropdown */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Asignado a {selectedAssignees.length > 0 && <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full ml-1">{selectedAssignees.length}</span>}
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
+                                            Asignado a {selectedAssignees.length > 0 && <span className="text-xs bg-primary/10 dark:bg-primary/20 text-primary dark:text-blue-400 px-2 py-0.5 rounded-full ml-1">{selectedAssignees.length}</span>}
                                         </label>
                                         <div className="relative">
                                             <div
-                                                className={`w-full px-4 py-2 border border-gray-300 rounded-lg min-h-[42px] flex flex-wrap gap-1 items-center bg-white ${userRole === 'funcionario' ? 'bg-gray-50 opacity-90' : 'cursor-pointer hover:border-primary/50'}`}
+                                                className={`w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg min-h-[42px] flex flex-wrap gap-1 items-center bg-white dark:bg-slate-800 ${userRole === 'funcionario' ? 'bg-gray-50 dark:bg-slate-800 opacity-80' : 'cursor-pointer hover:border-primary/50'}`}
                                                 onClick={() => userRole === 'contratista' && setIsUsersDropdownOpen(!isUsersDropdownOpen)}
                                             >
                                                 {selectedAssignees.length === 0 && (
-                                                    <span className="text-gray-400">Seleccionar usuarios...</span>
+                                                    <span className="text-gray-400 dark:text-slate-500">Seleccionar usuarios...</span>
                                                 )}
                                                 {selectedAssignees.map(id => {
                                                     const user = allUsers.find(u => u.id === id);
                                                     return user ? (
-                                                        <span key={id} className="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                                                        <span key={id} className="bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-200 text-xs px-2 py-1 rounded-md flex items-center gap-1">
                                                             {user.nombre_completo.split(' ')[0]}
                                                             {userRole === 'contratista' && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={(e) => { e.stopPropagation(); toggleAssignee(id); }}
-                                                                    className="hover:text-red-500"
+                                                                    className="text-gray-400 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400"
                                                                 >
                                                                     <X className="w-3 h-3" />
                                                                 </button>
@@ -490,13 +551,12 @@ export default function Calendar() {
                                                 })}
                                             </div>
 
-                                            {/* Dropdown UI */}
                                             {isUsersDropdownOpen && userRole === 'contratista' && (
                                                 <>
                                                     <div className="fixed inset-0 z-40" onClick={() => setIsUsersDropdownOpen(false)}></div>
-                                                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto py-1 animate-in fade-in slide-in-from-top-2">
+                                                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto py-1 animate-in fade-in slide-in-from-top-2">
                                                         {allUsers.length === 0 ? (
-                                                            <div className="p-3 text-sm text-center text-gray-500">No hay usuarios disponibles</div>
+                                                            <div className="p-3 text-sm text-center text-gray-500 dark:text-slate-400">No hay usuarios disponibles</div>
                                                         ) : (
                                                             allUsers.map((user) => {
                                                                 const isSelected = selectedAssignees.includes(user.id);
@@ -505,11 +565,11 @@ export default function Calendar() {
                                                                         key={user.id}
                                                                         type="button"
                                                                         onClick={() => toggleAssignee(user.id)}
-                                                                        className={`w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between transition-colors ${isSelected ? 'bg-primary/5' : ''}`}
+                                                                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center justify-between transition-colors ${isSelected ? 'bg-blue-50 dark:bg-slate-700/50' : ''}`}
                                                                     >
                                                                         <div>
-                                                                            <div className={`text-sm ${isSelected ? 'font-medium text-primary' : 'text-gray-700'}`}>{user.nombre_completo}</div>
-                                                                            <div className="text-xs text-gray-400">{user.email}</div>
+                                                                            <div className={`text-sm ${isSelected ? 'font-medium text-primary dark:text-blue-400' : 'text-gray-700 dark:text-slate-200'}`}>{user.nombre_completo}</div>
+                                                                            <div className="text-xs text-gray-400 dark:text-slate-400">{user.email}</div>
                                                                         </div>
                                                                         {isSelected && <Check className="w-4 h-4 text-primary" />}
                                                                     </button>
@@ -524,42 +584,49 @@ export default function Calendar() {
 
                                     {/* Description */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Detalles General (Contratista)</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Detalles General (Contratista)</label>
                                         <textarea
                                             rows={2}
                                             disabled={userRole === 'funcionario'}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none disabled:bg-gray-50 disabled:text-gray-500"
+                                            className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none disabled:bg-gray-50 dark:disabled:bg-slate-800/50 disabled:text-gray-500 dark:disabled:text-slate-500 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                                             placeholder="Agrega información adicional aquí..."
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
                                         />
                                     </div>
 
-                                    {/* Funcionario Notes */}
-                                    {(userRole === 'funcionario' || funcionarioNotes) && (
-                                        <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100">
-                                            <label className="block text-sm font-semibold text-blue-900 mb-1 flex items-center gap-1">
-                                                <AlignLeft className="w-4 h-4 text-blue-600" /> Notas del Funcionario
+                                    {((selectedEvent?.extendedProps?.funcionario_notes) || userRole === 'funcionario') && (
+                                        <div className="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100 dark:border-blue-500/20">
+                                            <label className="block text-sm font-semibold text-blue-900 dark:text-blue-400 mb-2 flex items-center gap-1">
+                                                <AlignLeft className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Historial de Asistencias y Notas
                                             </label>
-                                            <textarea
-                                                rows={2}
-                                                disabled={userRole !== 'funcionario'}
-                                                className="w-full px-4 py-2 border border-blue-200 bg-white rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors resize-none disabled:opacity-80"
-                                                placeholder={userRole === 'funcionario' ? "Escribe tus observaciones del seguimiento aquí..." : "Sin observaciones"}
-                                                value={funcionarioNotes}
-                                                onChange={(e) => setFuncionarioNotes(e.target.value)}
-                                            />
+                                            
+                                            {selectedEvent?.extendedProps?.funcionario_notes && (
+                                                <div className="mb-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-blue-100 dark:border-slate-700/50 text-sm whitespace-pre-wrap max-h-40 overflow-y-auto font-medium text-gray-700 dark:text-slate-300 shadow-inner">
+                                                    {selectedEvent.extendedProps.funcionario_notes}
+                                                </div>
+                                            )}
+
+                                            {userRole === 'funcionario' && (
+                                                <textarea
+                                                    rows={2}
+                                                    className="w-full px-4 py-2 border border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-primary transition-colors resize-none text-gray-900 dark:text-white font-medium placeholder:text-gray-400 dark:placeholder:text-slate-500"
+                                                    placeholder="Escribe confirmación de asistencia o comentario. Se guardará con tu nombre..."
+                                                    value={newNote}
+                                                    onChange={(e) => setNewNote(e.target.value)}
+                                                />
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="flex justify-end items-center gap-3 pt-4 border-t border-gray-100 shrink-0">
+                                <div className="flex justify-end items-center gap-3 pt-4 border-t border-gray-100 dark:border-slate-800 shrink-0">
                                     {selectedEvent && userRole === 'contratista' && (
                                         <button
                                             type="button"
                                             onClick={deleteEvent}
                                             disabled={isSaving}
-                                            className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors mr-auto disabled:opacity-50"
+                                            className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors mr-auto disabled:opacity-50"
                                         >
                                             Eliminar
                                         </button>
@@ -569,7 +636,7 @@ export default function Calendar() {
                                         type="button"
                                         onClick={closeModal}
                                         disabled={isSaving}
-                                        className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 disabled:opacity-50"
+                                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white rounded-lg transition-colors border border-gray-200 dark:border-slate-700 disabled:opacity-50"
                                     >
                                         Cancelar
                                     </button>

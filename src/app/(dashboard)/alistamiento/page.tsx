@@ -71,6 +71,11 @@ export default function AlistamientoPage() {
     }
 
     const handleToggle = async (dependenciaId: string, checkpoint: string, currentValue: boolean) => {
+        if (!['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '')) {
+            toast.error('No tienes permisos para editar, solo visualización')
+            return
+        }
+
         // Optimistic update
         const newValue = !currentValue
 
@@ -148,34 +153,34 @@ export default function AlistamientoPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Alistamiento de Auditoría</h1>
-                    <p className="text-slate-400">Control de requisitos para auditoría de gestión</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Alistamiento de Auditoría</h1>
+                    <p className="text-gray-500 dark:text-slate-400">Control de requisitos para auditoría de gestión</p>
                 </div>
-                <Button variant="outline" onClick={fetchData} disabled={loading}>
+                <Button variant="outline" onClick={fetchData} disabled={loading} className="border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800">
                     Actualizar
                 </Button>
             </div>
 
-            <Card className="card-glass border-slate-800">
+            <Card className="card-glass border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
                 <CardHeader>
-                    <CardTitle className="text-slate-200">Matriz de Cumplimiento</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-gray-900 dark:text-slate-200">Matriz de Cumplimiento</CardTitle>
+                    <CardDescription className="text-gray-500 dark:text-slate-400">
                         Marque los items cumplidos por dependencia.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="relative overflow-x-auto max-h-[70vh]">
                         <Table>
-                            <TableHeader className="bg-slate-900/90 py-4 sticky top-0 z-20">
-                                <TableRow>
-                                    <TableHead className="w-[300px] bg-slate-900/90 text-slate-300 font-bold sticky left-0 z-20">
+                            <TableHeader className="bg-gray-50/90 dark:bg-slate-900/90 py-4 sticky top-0 z-20">
+                                <TableRow className="border-gray-200 dark:border-slate-800">
+                                    <TableHead className="w-[300px] bg-gray-50/90 dark:bg-slate-900/90 text-gray-800 dark:text-slate-300 font-bold sticky left-0 z-20 border-r border-gray-200 dark:border-slate-800">
                                         Dependencia
                                     </TableHead>
-                                    <TableHead className="text-center min-w-[100px] text-slate-300 bg-slate-900/90">
+                                    <TableHead className="text-center min-w-[100px] text-gray-600 dark:text-slate-300 bg-gray-50/90 dark:bg-slate-900/90 border-r border-gray-200 dark:border-slate-800">
                                         % Avance
                                     </TableHead>
                                     {CHECKPOINTS.map((cp) => (
-                                        <TableHead key={cp} className="text-center min-w-[120px] text-slate-300 bg-slate-900/90">
+                                        <TableHead key={cp} className="text-center min-w-[120px] text-gray-600 dark:text-slate-300 bg-gray-50/90 dark:bg-slate-900/90">
                                             <div className="text-xs">{cp}</div>
                                         </TableHead>
                                     ))}
@@ -188,8 +193,8 @@ export default function AlistamientoPage() {
                                     const progress = (depAlistamientos.length / CHECKPOINTS.length) * 100
 
                                     return (
-                                        <TableRow key={dep.id} className="hover:bg-slate-800/50">
-                                            <TableCell className="font-medium text-slate-300 sticky left-0 bg-slate-950/90 z-10 border-r border-slate-800">
+                                        <TableRow key={dep.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 border-gray-200 dark:border-slate-800">
+                                            <TableCell className="font-medium text-gray-900 dark:text-slate-300 sticky left-0 bg-white dark:bg-slate-950/90 z-10 border-r border-gray-200 dark:border-slate-800">
                                                 {dep.nombre}
                                             </TableCell>
                                             <TableCell className="p-4 w-[150px]">
@@ -218,7 +223,8 @@ export default function AlistamientoPage() {
                                                             <Checkbox
                                                                 checked={isChecked}
                                                                 onCheckedChange={() => handleToggle(dep.id, cp, isChecked)}
-                                                                className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                                                                className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 disabled:opacity-50"
+                                                                disabled={!['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '')}
                                                             />
                                                         </div>
                                                     </TableCell>

@@ -98,6 +98,11 @@ export default function MiGestionPage() {
     }, [userProfile, vigenciaActual])
 
     const handleOpenDialog = (instrumento: Instrumento, periodo: string) => {
+        if (!['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '')) {
+            toast.error('Solo tienes permisos de visualización.')
+            return
+        }
+
         const seguimiento = seguimientos.find(s =>
             s.instrumento_id === instrumento.id &&
             s.periodo_corte === periodo

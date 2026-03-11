@@ -1,0 +1,222 @@
+[
+  {
+    "id": "9e6d5712-60ba-4e27-8284-8d0fd8b31a88",
+    "nombre": "Alumbrado Público",
+    "proceso_macro_id": "86967073-572c-4720-b273-55da4e5c291e",
+    "correo_responsable": "alumbrado@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-20T03:08:30.673012+00:00",
+    "reporte_pdd": true
+  },
+  {
+    "id": "e3087e80-73f3-4d40-8685-842bcfde09b2",
+    "nombre": "Atención al Ciudadano",
+    "proceso_macro_id": "a6c01899-754c-4f7c-aa71-e145a6aa6b9f",
+    "correo_responsable": "atencion@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "51c6f8cd-077f-4d9d-bb09-80f23a58417d",
+    "nombre": "Bicicletas Rueda por Ibagué",
+    "proceso_macro_id": "86967073-572c-4720-b273-55da4e5c291e",
+    "correo_responsable": "bicicletas@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-20T03:08:30.673012+00:00",
+    "reporte_pdd": true
+  },
+  {
+    "id": "7393d6aa-7d34-49dc-ae75-640099df34b0",
+    "nombre": "Complejo Cultural Panóptico",
+    "proceso_macro_id": "86967073-572c-4720-b273-55da4e5c291e",
+    "correo_responsable": "panoptico@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-20T03:08:30.673012+00:00",
+    "reporte_pdd": true
+  },
+  {
+    "id": "20511ae3-fefc-47da-b4bb-2c30b124f9b6",
+    "nombre": "Comunicación y Participación Ciudadana",
+    "proceso_macro_id": "21482b60-4989-49fe-841e-24c8e7152be6",
+    "correo_responsable": "comunicaciones@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "c0b73726-0f12-4d29-9893-0436430348a9",
+    "nombre": "Control Disciplinario",
+    "proceso_macro_id": "48ea5faf-41e3-43d8-bf0d-336e9dd12b7b",
+    "correo_responsable": "disciplinario@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "f076f4cb-a45e-4b8d-ac6b-7202642e32ce",
+    "nombre": "Evaluación Independiente",
+    "proceso_macro_id": "349dbbad-f749-4efd-986e-4c82b077e508",
+    "correo_responsable": "auditoria@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "f23c7207-2ffa-4df3-8a49-ec27ae5b3229",
+    "nombre": "Financiera",
+    "proceso_macro_id": "48ea5faf-41e3-43d8-bf0d-336e9dd12b7b",
+    "correo_responsable": "financiera@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "c3cd527b-424f-49a3-834c-b5914a29be4d",
+    "nombre": "Gestión Comercial",
+    "proceso_macro_id": "a6c01899-754c-4f7c-aa71-e145a6aa6b9f",
+    "correo_responsable": "comercial@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "f25000ce-02e0-44db-9014-836f85ab6949",
+    "nombre": "Gestión Contractual",
+    "proceso_macro_id": "48ea5faf-41e3-43d8-bf0d-336e9dd12b7b",
+    "correo_responsable": "contractual@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "30d8926f-dfb6-4bd8-b8df-3ffd1560b934",
+    "nombre": "Gestión de Operaciones Financieras",
+    "proceso_macro_id": "a6c01899-754c-4f7c-aa71-e145a6aa6b9f",
+    "correo_responsable": "operaciones@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "d0b7db9e-104d-4eb0-9104-ee89bafb940e",
+    "nombre": "Gestión del SIG",
+    "proceso_macro_id": "21482b60-4989-49fe-841e-24c8e7152be6",
+    "correo_responsable": "sig@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "c4a44320-6dd7-4634-9b26-a0173cdb4dd1",
+    "nombre": "Gestión Documental",
+    "proceso_macro_id": "48ea5faf-41e3-43d8-bf0d-336e9dd12b7b",
+    "correo_responsable": "documental@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "a5d829d6-1acc-4986-af8e-35124eee6930",
+    "nombre": "Gestión Estratégica",
+    "proceso_macro_id": "21482b60-4989-49fe-841e-24c8e7152be6",
+    "correo_responsable": "planeacion@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-20T03:08:30.673012+00:00",
+    "reporte_pdd": true
+  },
+  {
+    "id": "d4f58860-25b1-4ce2-b84d-082044fbedf0",
+    "nombre": "Gestión Integral de Riesgos",
+    "proceso_macro_id": "21482b60-4989-49fe-841e-24c8e7152be6",
+    "correo_responsable": "riesgos@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "50db9980-0467-4e14-b3cc-a9872da8cbcb",
+    "nombre": "Gestión Tecnológica",
+    "proceso_macro_id": "21482b60-4989-49fe-841e-24c8e7152be6",
+    "correo_responsable": "tecnologia@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "9b54d5f2-b8ec-4a2c-b6c9-088ebf1e91bf",
+    "nombre": "Humana",
+    "proceso_macro_id": "48ea5faf-41e3-43d8-bf0d-336e9dd12b7b",
+    "correo_responsable": "humana@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "15350a49-6416-498b-b0a9-93d24aef6680",
+    "nombre": "Jurídica",
+    "proceso_macro_id": "48ea5faf-41e3-43d8-bf0d-336e9dd12b7b",
+    "correo_responsable": "juridica@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "96b448c0-5f4d-463f-bcab-c69250f7f959",
+    "nombre": "Parques y Zonas Verdes",
+    "proceso_macro_id": "86967073-572c-4720-b273-55da4e5c291e",
+    "correo_responsable": "parques@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-20T03:08:30.673012+00:00",
+    "reporte_pdd": true
+  },
+  {
+    "id": "f7b4a4a6-c4d9-4511-a459-f40611f66bb9",
+    "nombre": "Plazas de Mercado",
+    "proceso_macro_id": "86967073-572c-4720-b273-55da4e5c291e",
+    "correo_responsable": "plazas@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-20T03:08:30.673012+00:00",
+    "reporte_pdd": true
+  },
+  {
+    "id": "30cbde9a-9fa6-4eca-a395-2d60828f2354",
+    "nombre": "Recursos Físicos",
+    "proceso_macro_id": "48ea5faf-41e3-43d8-bf0d-336e9dd12b7b",
+    "correo_responsable": "rfisicos@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  },
+  {
+    "id": "3d934d26-f21e-44d6-8b74-b6e0191b28bc",
+    "nombre": "Relleno Sanitario",
+    "proceso_macro_id": "86967073-572c-4720-b273-55da4e5c291e",
+    "correo_responsable": "relleno@infibague.gov.co",
+    "activa": true,
+    "created_at": "2026-02-19T02:44:31.442545+00:00",
+    "updated_at": "2026-02-19T02:44:31.442545+00:00",
+    "reporte_pdd": false
+  }
+]

@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="min-h-screen flex bg-background">
+        <div className="min-h-screen flex bg-gray-50 dark:bg-background">
             <Sidebar
                 isOpen={isOpen}
                 toggleSidebar={() => setIsOpen(!isOpen)}

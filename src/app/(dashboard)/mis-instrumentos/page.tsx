@@ -5,11 +5,12 @@ import { createClient } from '@/lib/supabase/client'
 import { useVigenciaStore } from '@/stores/vigenciaStore'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Loader2, FileCheck, CheckCircle2, XCircle, AlertCircle, Circle, ChevronRight } from 'lucide-react'
-import type { Instrumento, Seguimiento, FrecuenciaInstrumento } from '@/types/database'
+import type { Instrumento, Seguimiento, FrecuenciaInstrumento, Dependencia } from '@/types/database'
 import { SemaforoCell } from '@/components/seguimientos/SemaforoCell'
 import { SeguimientoDialog } from '@/components/seguimientos/SeguimientoDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { getDependenciasParaInstrumento, formatDependenciaName, getMisDependencias } from '@/lib/responsabilidades'
 
 function getPeriodsForFrecuencia(frecuencia: FrecuenciaInstrumento): string[] {
     switch (frecuencia) {
@@ -45,9 +46,13 @@ export default function MisInstrumentosPage() {
     const [instrumentos, setInstrumentos] = useState<Instrumento[]>([])
     const [seguimientos, setSeguimientos] = useState<Seguimiento[]>([])
     const [userProfile, setUserProfile] = useState<{ id: string; rol: any; dependencia_id: string | null } | null>(null)
+    const [misDependenciaIds, setMisDependenciaIds] = useState<string[]>([])
+    const [misDependencias, setMisDependencias] = useState<any[]>([])
+    const [userLoaded, setUserLoaded] = useState(false)
 
     const [dialogOpen, setDialogOpen] = useState(false)
     const [selectedCell, setSelectedCell] = useState<{
+        dependencia: Dependencia
         instrumento: Instrumento
         periodo: string
         seguimiento: Seguimiento | null
@@ -58,22 +63,33 @@ export default function MisInstrumentosPage() {
     useEffect(() => {
         const fetchUser = async () => {
             const { data: { user } } = await supabase.auth.getUser()
-            if (!user) return
+            if (!user) {
+                setUserLoaded(true)
+                return
+            }
             const { data } = await supabase.from('perfiles').select('*').eq('id', user.id).single()
             if (data) setUserProfile(data)
+            setUserLoaded(true)
         }
         fetchUser()
     }, [])
 
     const fetchSeguimientos = useCallback(async () => {
-        if (!vigenciaActual || !userProfile?.dependencia_id) return
+        if (!vigenciaActual || !userLoaded) return
+        
+        // If there's no dependency, no seguimientos to load for the single view
+        if (misDependenciaIds.length === 0) {
+            setSeguimientos([])
+            return
+        }
+
         setLoading(true)
         try {
             const { data, error } = await supabase
                 .from('seguimientos')
                 .select('*')
                 .eq('vigencia_id', vigenciaActual.id)
-                .eq('dependencia_id', userProfile.dependencia_id)
+                .in('dependencia_id', misDependenciaIds)
             if (error) throw error
             setSeguimientos(data ?? [])
         } catch {
@@ -81,10 +97,11 @@ export default function MisInstrumentosPage() {
         } finally {
             setLoading(false)
         }
-    }, [vigenciaActual, userProfile?.dependencia_id])
+    }, [vigenciaActual, userLoaded, misDependenciaIds])
 
     useEffect(() => {
-        if (!vigenciaActual) return
+        if (!vigenciaActual || !userLoaded) return
+        
         const fetchInstrumentos = async () => {
             setLoading(true)
             try {
@@ -94,7 +111,28 @@ export default function MisInstrumentosPage() {
                     .eq('activo', true)
                     .order('orden')
                 if (error) throw error
-                setInstrumentos(data ?? [])
+
+                let allInsts = data ?? []
+
+                if (userProfile?.dependencia_id) {
+                    const { data: todasDeps } = await supabase.from('dependencias').select('*')
+                    if (todasDeps) {
+                        const misDepsData = getMisDependencias(userProfile.dependencia_id, todasDeps)
+                        setMisDependenciaIds(misDepsData.map(d => d.id))
+                        setMisDependencias(misDepsData)
+
+                        const aplicables = allInsts.filter(inst => {
+                            const validDeps = getDependenciasParaInstrumento(inst.nombre, misDepsData)
+                            return validDeps.length > 0
+                        })
+                        setInstrumentos(aplicables)
+                        return
+                    }
+                }
+                
+                // If it's an admin or user with no dependency
+                setInstrumentos(allInsts)
+
             } catch {
                 toast.error('Error cargando instrumentos')
             } finally {
@@ -102,21 +140,25 @@ export default function MisInstrumentosPage() {
             }
         }
         fetchInstrumentos()
-    }, [vigenciaActual])
+    }, [vigenciaActual, userProfile])
 
     useEffect(() => { fetchSeguimientos() }, [fetchSeguimientos])
 
     const seguimientosMap = useMemo(() => {
         const map = new Map<string, Seguimiento>()
-        seguimientos.forEach(s => map.set(`${s.instrumento_id}-${s.periodo_corte}`, s))
+        seguimientos.forEach(s => map.set(`${s.dependencia_id}-${s.instrumento_id}-${s.periodo_corte}`, s))
         return map
     }, [seguimientos])
 
-    const getSeguimientoPara = (instrId: string, periodo: string) =>
-        seguimientosMap.get(`${instrId}-${periodo}`) ?? null
+    const getSeguimientoPara = (depId: string, instrId: string, periodo: string) =>
+        seguimientosMap.get(`${depId}-${instrId}-${periodo}`) ?? null
 
-    const handleClick = (instrumento: Instrumento, periodo: string) => {
-        setSelectedCell({ instrumento, periodo, seguimiento: getSeguimientoPara(instrumento.id, periodo) })
+    const handleClick = (dependencia: Dependencia, instrumento: Instrumento, periodo: string) => {
+        if (!['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && userProfile?.rol !== 'jefe_oficina') {
+            toast.error('Solo tienes permisos de visualización.')
+            return
+        }
+        setSelectedCell({ dependencia, instrumento, periodo, seguimiento: getSeguimientoPara(dependencia.id, instrumento.id, periodo) })
         setDialogOpen(true)
     }
 
@@ -132,13 +174,13 @@ export default function MisInstrumentosPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div>
-                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                    <FileCheck className="w-8 h-8 text-blue-400" />
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                    <FileCheck className="w-8 h-8 text-blue-500 dark:text-blue-400" />
                     Mis Instrumentos
                 </h1>
-                <p className="text-slate-400 mt-1">
+                <p className="text-gray-500 dark:text-slate-400 mt-1">
                     Reporte su cumplimiento por instrumento — Vigencia{' '}
-                    <span className="text-blue-400 font-semibold">{vigenciaActual.anio}</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span>
                 </p>
             </div>
 
@@ -147,65 +189,80 @@ export default function MisInstrumentosPage() {
                     <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
                 </div>
             ) : (
-                <div className="grid gap-4">
-                    {instrumentos.map((inst) => {
-                        const periods = getPeriodsForFrecuencia(inst.frecuencia)
-                        const cumplidos = periods.filter(p => getSeguimientoPara(inst.id, p)?.estado_semaforo === 'verde').length
-                        const total = periods.length
-                        const pct = total > 0 ? Math.round((cumplidos / total) * 100) : 0
+                <div className="space-y-10">
+                    {misDependencias.map(dep => {
+                        const instsParaDep = instrumentos.filter(inst => getDependenciasParaInstrumento(inst.nombre, [dep]).length > 0)
+                        if (instsParaDep.length === 0) return null
 
                         return (
-                            <Card key={inst.id} className="card-glass border-slate-800 bg-slate-900/40">
-                                <CardHeader className="pb-3">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div>
-                                            <CardTitle className="text-base text-slate-100">{inst.nombre}</CardTitle>
-                                            {inst.descripcion && (
-                                                <CardDescription className="text-slate-500 text-xs mt-1">{inst.descripcion}</CardDescription>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2 shrink-0">
-                                            <span className={cn('text-[11px] px-2 py-0.5 rounded border font-semibold', FRECUENCIA_COLOR[inst.frecuencia])}>
-                                                {FRECUENCIA_LABEL[inst.frecuencia]}
-                                            </span>
-                                            <span className="text-xs text-slate-400">{cumplidos}/{total}</span>
-                                        </div>
-                                    </div>
-                                    {/* Progress bar */}
-                                    <div className="w-full h-1.5 bg-slate-800 rounded-full mt-2 overflow-hidden">
-                                        <div
-                                            className={cn('h-full rounded-full transition-all duration-500',
-                                                pct === 100 ? 'bg-green-500' : pct > 50 ? 'bg-yellow-500' : 'bg-red-500'
-                                            )}
-                                            style={{ width: `${pct}%` }}
-                                        />
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="flex flex-wrap gap-3">
-                                        {periods.map((period) => {
-                                            const seg = getSeguimientoPara(inst.id, period)
-                                            const estado = seg?.estado_semaforo ?? 'gris'
-                                            return (
-                                                <button
-                                                    key={period}
-                                                    onClick={() => handleClick(inst, period)}
-                                                    className={cn(
-                                                        'flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg border transition-all duration-200',
-                                                        'hover:bg-slate-700/50 hover:border-slate-600 hover:scale-105',
-                                                        estado === 'gris'
-                                                            ? 'border-slate-800 bg-slate-900/40'
-                                                            : 'border-slate-700 bg-slate-900/60'
-                                                    )}
-                                                >
-                                                    <SemaforoCell estado={estado} />
-                                                    <span className="text-[10px] text-slate-400 font-medium">{period}</span>
-                                                </button>
-                                            )
-                                        })}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <div key={dep.id} className="space-y-4">
+                                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800 dark:text-slate-100">
+                                    <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
+                                    Proceso: {formatDependenciaName(dep.nombre)}
+                                </h2>
+                                <div className="grid gap-4">
+                                    {instsParaDep.map((inst) => {
+                                        const periods = getPeriodsForFrecuencia(inst.frecuencia)
+                                        const cumplidos = periods.filter(p => getSeguimientoPara(dep.id, inst.id, p)?.estado_semaforo === 'verde').length
+                                        const total = periods.length
+                                        const pct = total > 0 ? Math.round((cumplidos / total) * 100) : 0
+
+                                        return (
+                                            <Card key={`${dep.id}-${inst.id}`} className="card-glass border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
+                                                <CardHeader className="pb-3">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                        <div>
+                                                            <CardTitle className="text-base text-gray-900 dark:text-slate-100">{inst.nombre}</CardTitle>
+                                                            {inst.descripcion && (
+                                                                <CardDescription className="text-gray-500 dark:text-slate-500 text-xs mt-1">{inst.descripcion}</CardDescription>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <span className={cn('text-[11px] px-2 py-0.5 rounded border font-semibold', FRECUENCIA_COLOR[inst.frecuencia])}>
+                                                                {FRECUENCIA_LABEL[inst.frecuencia]}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500 dark:text-slate-400">{cumplidos}/{total}</span>
+                                                        </div>
+                                                    </div>
+                                                    {/* Progress bar */}
+                                                    <div className="w-full h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
+                                                        <div
+                                                            className={cn('h-full rounded-full transition-all duration-500',
+                                                                pct === 100 ? 'bg-green-500' : pct > 50 ? 'bg-yellow-500' : 'bg-red-500'
+                                                            )}
+                                                            style={{ width: `${pct}%` }}
+                                                        />
+                                                    </div>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {periods.map((period) => {
+                                                            const seg = getSeguimientoPara(dep.id, inst.id, period)
+                                                            const estado = seg?.estado_semaforo ?? 'gris'
+                                                            return (
+                                                                <button
+                                                                    key={period}
+                                                                    onClick={() => handleClick(dep, inst, period)}
+                                                                    className={cn(
+                                                                        'flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg border transition-all duration-200',
+                                                                        'hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:border-gray-300 dark:hover:border-slate-600 hover:scale-105',
+                                                                        estado === 'gris'
+                                                                            ? 'border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/40'
+                                                                            : 'border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900/60 shadow-sm'
+                                                                    )}
+                                                                >
+                                                                    <SemaforoCell estado={estado} />
+                                                                    <span className="text-[10px] text-gray-500 dark:text-slate-400 font-medium">{period}</span>
+                                                                </button>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        )
+                                    })}
+                                </div>
+                            </div>
                         )
                     })}
                 </div>
@@ -216,7 +273,7 @@ export default function MisInstrumentosPage() {
                     open={dialogOpen}
                     onOpenChange={setDialogOpen}
                     vigenciaId={vigenciaActual.id}
-                    dependencia={{ id: userProfile.dependencia_id, nombre: '', proceso_macro_id: '', correo_responsable: null, activa: true, reporte_pdd: false, created_at: '', updated_at: '' }}
+                    dependencia={selectedCell.dependencia}
                     instrumento={selectedCell.instrumento}
                     periodo={selectedCell.periodo}
                     seguimientoExistente={selectedCell.seguimiento}

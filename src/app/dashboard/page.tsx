@@ -42,7 +42,7 @@ export default function DashboardPage() {
     if (['super_admin', 'equipo_planeacion', 'gerente', 'auditor'].includes(profile.rol)) {
         return (
             <div className="animate-in fade-in duration-500">
-                <h1 className="text-3xl font-bold text-white mb-6">Centro de Comando</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Centro de Comando</h1>
                 <AdminDashboard />
             </div>
         )

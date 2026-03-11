@@ -5,7 +5,44 @@
 @tailwind utilities;
 
 @layer base {
+  /* ===== LIGHT MODE (default) ===== */
   :root {
+    --background: 0 0% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 218 85% 45%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 20% 45%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 218 85% 45%;
+    --radius: 0.5rem;
+
+    /* Semaphore colors */
+    --verde: 142 76% 45%;
+    --amarillo: 48 95% 55%;
+    --rojo: 0 84% 55%;
+    --gris: 215 20% 45%;
+
+    /* Sidebar */
+    --sidebar-bg: 220 15% 97%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-item-hover: 210 40% 96%;
+    --sidebar-item-active: 218 85% 45%;
+  }
+
+  /* ===== DARK MODE ===== */
+  .dark {
     --background: 222 47% 5%;
     --foreground: 210 40% 96%;
     --card: 222 47% 8%;
@@ -97,14 +134,14 @@
     @apply bg-slate-500/20 text-slate-400 border border-slate-500/30;
   }
 
-  /* Card glass effect */
+  /* Card glass effect - adaptive */
   .card-glass {
-    @apply rounded-xl border border-white/5 bg-white/[0.03] backdrop-blur-sm;
+    @apply rounded-xl border border-black/5 bg-white/80 backdrop-blur-sm dark:border-white/5 dark:bg-white/[0.03];
   }
 
   /* Gradient header text */
   .gradient-text {
-    @apply bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400 bg-clip-text text-transparent;
   }
 
   /* Neon glow for active elements */
@@ -126,16 +163,16 @@
   }
 
   .data-table tr:hover td {
-    @apply bg-white/[0.02];
+    @apply bg-black/[0.02] dark:bg-white/[0.02];
   }
 
   /* Sidebar item */
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-white/5;
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5;
   }
 
   .sidebar-item.active {
-    @apply text-blue-400 bg-blue-500/10 border border-blue-500/20;
+    @apply text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20;
     box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1);
   }
 }

@@ -81,11 +81,11 @@ export default function AdminUsuariosPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                        <UserCog className="w-8 h-8 text-blue-400" />
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                        <UserCog className="w-8 h-8 text-blue-500 dark:text-blue-400" />
                         Gestión de Usuarios
                     </h1>
-                    <p className="text-slate-400 mt-1">Administra perfiles, roles y asignación de oficinas</p>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">Administra perfiles, roles y asignación de oficinas</p>
                 </div>
                 <Button
                     variant="outline"
@@ -107,17 +107,17 @@ export default function AdminUsuariosPage() {
                     { label: 'Inactivos', value: inactivos, icon: Users, color: 'text-red-400' },
                     { label: 'Oficinas', value: oficinas.length, icon: Building2, color: 'text-purple-400' },
                 ].map(stat => (
-                    <div key={stat.label} className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
+                    <div key={stat.label} className="p-4 rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-white/[0.02]">
                         <stat.icon className={`w-5 h-5 mb-2 ${stat.color}`} />
                         <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                        <p className="text-xs text-slate-500">{stat.label}</p>
+                        <p className="text-xs text-gray-500 dark:text-slate-500">{stat.label}</p>
                     </div>
                 ))}
             </div>
 
-            <Card className="card-glass border-slate-800">
+            <Card className="card-glass border-gray-200 dark:border-slate-800">
                 <CardHeader>
-                    <CardTitle className="text-slate-200">Usuarios Registrados</CardTitle>
+                    <CardTitle className="text-gray-900 dark:text-slate-200">Usuarios Registrados</CardTitle>
                     <CardDescription>
                         Haz clic en <strong>Editar</strong> para cambiar rol, oficina o estado de un usuario
                     </CardDescription>
@@ -130,14 +130,14 @@ export default function AdminUsuariosPage() {
                     ) : (
                         <div className="relative overflow-x-auto">
                             <Table>
-                                <TableHeader className="bg-slate-900/90">
+                                <TableHeader className="bg-gray-50 dark:bg-slate-900/90">
                                     <TableRow>
-                                        <TableHead className="text-slate-300">Usuario</TableHead>
-                                        <TableHead className="text-slate-300">Cargo</TableHead>
-                                        <TableHead className="text-slate-300">Rol</TableHead>
-                                        <TableHead className="text-slate-300">Oficina</TableHead>
-                                        <TableHead className="text-center text-slate-300">Estado</TableHead>
-                                        <TableHead className="text-right text-slate-300">Acciones</TableHead>
+                                        <TableHead className="text-gray-700 dark:text-slate-300">Usuario</TableHead>
+                                        <TableHead className="text-gray-700 dark:text-slate-300">Cargo</TableHead>
+                                        <TableHead className="text-gray-700 dark:text-slate-300">Rol</TableHead>
+                                        <TableHead className="text-gray-700 dark:text-slate-300">Oficina</TableHead>
+                                        <TableHead className="text-center text-gray-700 dark:text-slate-300">Estado</TableHead>
+                                        <TableHead className="text-right text-gray-700 dark:text-slate-300">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -148,16 +148,16 @@ export default function AdminUsuariosPage() {
                                             </TableCell>
                                         </TableRow>
                                     ) : users.map(user => (
-                                        <TableRow key={user.id} className="hover:bg-slate-800/50">
+                                        <TableRow key={user.id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
                                             <TableCell>
                                                 <div className="flex flex-col">
-                                                    <span className="font-medium text-slate-200">
+                                                    <span className="font-medium text-gray-900 dark:text-slate-200">
                                                         {user.nombre_completo || '—'}
                                                     </span>
-                                                    <span className="text-xs text-slate-500">{user.email}</span>
+                                                    <span className="text-xs text-gray-500 dark:text-slate-500">{user.email}</span>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-slate-400 text-sm">
+                                            <TableCell className="text-gray-600 dark:text-slate-400 text-sm">
                                                 {user.cargo || '—'}
                                             </TableCell>
                                             <TableCell>
@@ -165,7 +165,7 @@ export default function AdminUsuariosPage() {
                                                     {ROL_LABELS_ES[user.rol] ?? user.rol}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-slate-300 text-sm">
+                                            <TableCell className="text-gray-700 dark:text-slate-300 text-sm">
                                                 {(user.oficinas as any)?.nombre || '—'}
                                             </TableCell>
                                             <TableCell className="text-center">

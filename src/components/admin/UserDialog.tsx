@@ -84,26 +84,26 @@ export function UserDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-200 border-gray-200 dark:border-slate-700">
                 <DialogHeader>
-                    <DialogTitle>Editar Usuario</DialogTitle>
-                    <p className="text-sm text-slate-400">{userToEdit?.email}</p>
+                    <DialogTitle className="text-gray-900 dark:text-white">Editar Usuario</DialogTitle>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">{userToEdit?.email}</p>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
                     {/* Rol */}
                     <div className="grid gap-2">
-                        <Label>Rol en la plataforma</Label>
+                        <Label className="text-gray-700 dark:text-slate-300">Rol en la plataforma</Label>
                         <Select
                             value={formData.rol}
                             onValueChange={val => setFormData({ ...formData, rol: val as RolUsuario })}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-gray-50 dark:bg-slate-800 border-gray-300 dark:border-slate-700 text-gray-900 dark:text-slate-200">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200">
                                 {ROL_LIST.map(r => (
-                                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                                    <SelectItem key={r.value} value={r.value} className="focus:bg-blue-50 dark:focus:bg-slate-700 focus:text-blue-900 dark:focus:text-white cursor-pointer">{r.label}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -111,37 +111,38 @@ export function UserDialog({
 
                     {/* Oficina */}
                     <div className="grid gap-2">
-                        <Label>Oficina / Dependencia</Label>
+                        <Label className="text-gray-700 dark:text-slate-300">Oficina / Dependencia</Label>
                         <Select
                             value={formData.oficina_id || 'none'}
                             onValueChange={val => setFormData({ ...formData, oficina_id: val === 'none' ? null : val })}
                         >
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-gray-50 dark:bg-slate-800 border-gray-300 dark:border-slate-700 text-gray-900 dark:text-slate-200">
                                 <SelectValue placeholder="Seleccione oficina..." />
                             </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">-- Sin oficina --</SelectItem>
+                            <SelectContent className="bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200 max-h-60 overflow-y-auto">
+                                <SelectItem value="none" className="focus:bg-blue-50 dark:focus:bg-slate-700 focus:text-blue-900 dark:focus:text-white cursor-pointer">-- Sin oficina --</SelectItem>
                                 {oficinas.map(o => (
-                                    <SelectItem key={o.id} value={o.id}>{o.nombre}</SelectItem>
+                                    <SelectItem key={o.id} value={o.id} className="focus:bg-blue-50 dark:focus:bg-slate-700 focus:text-blue-900 dark:focus:text-white cursor-pointer">{o.nombre}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </div>
 
                     {/* Activo */}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-3 mt-2">
                         <Checkbox
                             id="activo"
                             checked={formData.activo}
                             onCheckedChange={c => setFormData({ ...formData, activo: c as boolean })}
+                            className="border-gray-400 dark:border-slate-500 data-[state=checked]:bg-blue-600"
                         />
-                        <Label htmlFor="activo">Usuario activo</Label>
+                        <Label htmlFor="activo" className="text-gray-700 dark:text-slate-300 font-medium cursor-pointer">Usuario activo en el sistema</Label>
                     </div>
                 </div>
 
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-                    <Button onClick={handleSubmit} disabled={loading} className="bg-blue-600 hover:bg-blue-500">
+                <DialogFooter className="mt-6 border-t border-gray-100 dark:border-slate-800 pt-4">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="bg-transparent border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white">Cancelar</Button>
+                    <Button onClick={handleSubmit} disabled={loading} className="bg-blue-600 text-white hover:bg-blue-500">
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Guardar cambios
                     </Button>

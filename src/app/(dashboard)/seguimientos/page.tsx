@@ -20,7 +20,7 @@ import { SemaforoCell } from '@/components/seguimientos/SemaforoCell'
 import { SeguimientoDialog } from '@/components/seguimientos/SeguimientoDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { canViewInstrumento, getDependenciasParaInstrumento } from '@/lib/responsabilidades'
+import { canViewInstrumento, getDependenciasParaInstrumento, formatDependenciaName } from '@/lib/responsabilidades'
 
 // ─── Period generation based on instrument frequency ───────────────────────
 function getPeriodsForFrecuencia(frecuencia: FrecuenciaInstrumento): string[] {
@@ -169,7 +169,7 @@ export default function SeguimientosPage() {
     const visibleDependencias = currentInstrumento
         ? getDependenciasParaInstrumento(currentInstrumento.nombre, dependencias)
         : dependencias;
-
+        
     const seguimientosMap = useMemo(() => {
         const map = new Map<string, Seguimiento>()
         seguimientos.forEach(s => map.set(`${s.dependencia_id}-${s.periodo_corte}`, s))
@@ -214,15 +214,15 @@ export default function SeguimientosPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                        <BarChart3 className="w-8 h-8 text-blue-400" />
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                        <BarChart3 className="w-8 h-8 text-blue-500 dark:text-blue-400" />
                         Mesa de Control
                     </h1>
-                    <p className="text-slate-400 mt-1">
-                        Instrumentos de Planeación — Vigencia <span className="text-blue-400 font-semibold">{vigenciaActual.anio}</span>
+                    <p className="text-gray-500 dark:text-slate-400 mt-1">
+                        Instrumentos de Planeación — Vigencia <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span>
                     </p>
                 </div>
-                <Button variant="outline" size="sm" className="hidden md:flex border-slate-700 text-slate-300 hover:bg-slate-800">
+                <Button variant="outline" size="sm" className="hidden md:flex border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800">
                     <Download className="w-4 h-4 mr-2" />
                     Exportar Informe
                 </Button>
@@ -231,12 +231,12 @@ export default function SeguimientosPage() {
             {/* Stats Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {SEMAFORO_STATS_CONFIG.map(({ key, label, icon: Icon, color }) => (
-                    <Card key={key} className="card-glass border-slate-800 bg-slate-900/40">
+                    <Card key={key} className="card-glass border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
                         <CardContent className="p-4 flex items-center gap-3">
                             <Icon className={cn('w-8 h-8', color)} />
                             <div>
-                                <p className="text-2xl font-bold text-white">{stats[key]}</p>
-                                <p className="text-xs text-slate-400">{label}</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats[key]}</p>
+                                <p className="text-xs text-gray-500 dark:text-slate-400">{label}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -258,8 +258,8 @@ export default function SeguimientosPage() {
                                 className={cn(
                                     'group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
                                     isSelected
-                                        ? 'bg-blue-600/20 border-blue-500/50 text-white shadow-[0_0_20px_-5px_rgba(37,99,235,0.5)]'
-                                        : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80',
+                                        ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-200 dark:border-blue-500/50 text-blue-700 dark:text-white shadow-[0_0_20px_-5px_rgba(37,99,235,0.2)] dark:shadow-[0_0_20px_-5px_rgba(37,99,235,0.5)]'
+                                        : 'bg-white dark:bg-slate-900/60 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800/80',
                                 )}
                             >
                                 <span className="truncate max-w-[220px]">{inst.nombre}</span>
@@ -276,14 +276,14 @@ export default function SeguimientosPage() {
             </div>
 
             {/* Main Table */}
-            <Card className="card-glass border-slate-800">
+            <Card className="card-glass border-gray-200 dark:border-slate-800">
                 <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                            <CardTitle className="text-lg text-slate-100 flex items-center gap-2">
+                            <CardTitle className="text-lg text-gray-900 dark:text-slate-100 flex items-center gap-2">
                                 {currentInstrumento?.nombre || '—'}
                             </CardTitle>
-                            <CardDescription className="text-slate-400">
+                            <CardDescription className="text-gray-500 dark:text-slate-400">
                                 {currentInstrumento?.descripcion || 'Seleccione un instrumento'}
                                 {currentInstrumento && (
                                     <span className={cn('ml-2 text-[11px] px-2 py-0.5 rounded border font-semibold',
@@ -296,21 +296,21 @@ export default function SeguimientosPage() {
                     </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                    <div className="relative overflow-hidden rounded-b-xl border-t border-slate-800">
+                    <div className="relative overflow-hidden rounded-b-xl border-t border-gray-200 dark:border-slate-800">
                         {loading && (
-                            <div className="absolute inset-0 bg-slate-950/60 z-20 flex items-center justify-center backdrop-blur-sm">
-                                <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+                            <div className="absolute inset-0 bg-white/60 dark:bg-slate-950/60 z-20 flex items-center justify-center backdrop-blur-sm">
+                                <Loader2 className="w-8 h-8 animate-spin text-blue-500 dark:text-blue-400" />
                             </div>
                         )}
 
                         <Table wrapperClassName="max-h-[calc(100vh-480px)]">
-                            <TableHeader className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm">
-                                <TableRow className="border-slate-800 hover:bg-transparent">
-                                    <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-slate-900/95 z-20 border-r border-slate-800 text-slate-300 font-bold py-4 pl-5">
+                            <TableHeader className="sticky top-0 z-10 bg-gray-50/95 dark:bg-slate-900/95 backdrop-blur-sm">
+                                <TableRow className="border-gray-200 dark:border-slate-800 hover:bg-transparent">
+                                    <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-gray-50/95 dark:bg-slate-900/95 z-20 border-r border-gray-200 dark:border-slate-800 text-gray-800 dark:text-slate-300 font-bold py-4 pl-5">
                                         Dependencia / Oficina
                                     </TableHead>
                                     {periods.map((period) => (
-                                        <TableHead key={period} className="text-center min-w-[110px] text-slate-400 font-semibold text-xs uppercase tracking-wide py-4">
+                                        <TableHead key={period} className="text-center min-w-[110px] text-gray-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wide py-4">
                                             {period}
                                         </TableHead>
                                     ))}
@@ -328,14 +328,14 @@ export default function SeguimientosPage() {
                                     <TableRow
                                         key={dep.id}
                                         className={cn(
-                                            'border-slate-800/50 transition-colors',
-                                            i % 2 === 0 ? 'bg-slate-950/20' : 'bg-transparent',
-                                            'hover:bg-slate-800/40'
+                                            'border-gray-200 dark:border-slate-800/50 transition-colors',
+                                            i % 2 === 0 ? 'bg-gray-50/50 dark:bg-slate-950/20' : 'bg-transparent',
+                                            'hover:bg-blue-50/50 dark:hover:bg-slate-800/40'
                                         )}
                                     >
-                                        <TableCell className="font-medium text-slate-200 sticky left-0 bg-slate-950 z-10 border-r border-slate-800 py-3 pl-5">
+                                        <TableCell className="font-medium text-gray-900 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-950 z-10 border-r border-gray-200 dark:border-slate-800 py-3 pl-5 group-hover:bg-blue-50/50 dark:group-hover:bg-slate-900/80">
                                             <div className="flex flex-col gap-0.5">
-                                                <span className="text-sm font-semibold line-clamp-2 max-w-[240px]">{dep.nombre}</span>
+                                                <span className="text-sm font-semibold line-clamp-2 max-w-[240px]">{formatDependenciaName(dep.nombre)}</span>
                                             </div>
                                         </TableCell>
                                         {periods.map((period) => {
@@ -364,9 +364,9 @@ export default function SeguimientosPage() {
                         </Table>
 
                         {/* Legend */}
-                        <div className="flex items-center gap-6 px-5 py-3 border-t border-slate-800 bg-slate-900/50">
+                        <div className="flex items-center gap-6 px-5 py-3 border-t border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/50">
                             {SEMAFORO_STATS_CONFIG.map(({ key, label, icon: Icon, color }) => (
-                                <div key={key} className="flex items-center gap-1.5 text-xs text-slate-400">
+                                <div key={key} className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-slate-400">
                                     <Icon className={cn('w-3.5 h-3.5', color)} />
                                     <span>{label}</span>
                                 </div>
