@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useVigenciaStore } from '@/stores/vigenciaStore'
 import {
@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Loader2, Plus, Target, CheckCircle2, Trash2, Edit } from 'lucide-react'
+import { Loader2, Plus, Target, Trash2, Edit } from 'lucide-react'
 import type { MetasPdd, RolUsuario, Dependencia } from '@/types/database'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -33,6 +33,13 @@ export default function MetasPddPage() {
     const [dependencia, setDependencia] = useState<Dependencia | null>(null)
     const [metas, setMetas] = useState<MetasPdd[]>([])
     const [todasDependencias, setTodasDependencias] = useState<Dependencia[]>([])
+
+    // Roles and Permissions
+    const isPddAdmin = useMemo(() => {
+        if (!userProfile) return false;
+        return ['super_admin', 'equipo_planeacion'].includes(userProfile.rol) || 
+               userProfile.nombre_completo?.toUpperCase().includes('PAOLA ANDREA OYOLA ALVIS');
+    }, [userProfile]);
 
     // State Variables for Modal
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -57,21 +64,20 @@ export default function MetasPddPage() {
             setDependencia((userProfile as any).oficinas as Dependencia)
 
             // Comprobar Acceso: Permite si es super usuario o si tiene acceso según responsabilidades
-            const isSuperUser = ['super_admin', 'equipo_planeacion', 'gerente', 'auditor'].includes(userProfile.rol)
             const authorizedByName = hasSidebarAccess('Metas PDD', userProfile.nombre_completo, userProfile.rol, (userProfile as any).oficinas?.nombre)
 
-            if (isSuperUser || authorizedByName) {
+            if (isPddAdmin || authorizedByName) {
                 setHasAccess(true)
             } else {
                 setLoading(false)
             }
         }
-    }, [initialized, userProfile])
+    }, [initialized, userProfile, isPddAdmin])
 
     useEffect(() => {
-        if (!hasAccess || !vigenciaActual || !dependencia) return
+        if (!hasAccess || !vigenciaActual) return
         fetchMetas()
-    }, [hasAccess, vigenciaActual, dependencia])
+    }, [hasAccess, vigenciaActual])
 
     const fetchMetas = async () => {
         if (!vigenciaActual) return
@@ -83,10 +89,8 @@ export default function MetasPddPage() {
 
             let query = supabase.from('metas_pdd').select('*, dependencias(nombre)').eq('vigencia_id', vigenciaActual.id)
 
-            // Si es jefe_oficina o funcionario (sin ser super_admin/equipo_planeacion), filtrar por su dependencia
-            const isBroadEditor = ['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '')
-            if (!isBroadEditor && dependencia) {
-                // Buscamos el ID en la tabla dependencias que coincida con el nombre de nuestra oficina
+            // Si no es admin PDD, filtrar por su dependencia
+            if (!isPddAdmin && dependencia) {
                 const matchingDep = depsData?.find(d => 
                     d.nombre.toUpperCase().trim() === dependencia.nombre.toUpperCase().trim()
                 )
@@ -136,7 +140,6 @@ export default function MetasPddPage() {
     const handleEdit = (meta: MetasPdd | null) => {
         setEditingMeta(meta)
 
-        // Buscamos si nuestra oficina actual tiene un ID de dependencia equivalente para pre-seleccionar
         const mappedDepId = todasDependencias.find(d => 
             d.nombre.toUpperCase().trim() === dependencia?.nombre?.toUpperCase().trim()
         )?.id || dependencia?.id || ''
@@ -168,13 +171,8 @@ export default function MetasPddPage() {
     const handleSave = async () => {
         if (!vigenciaActual) return
 
-        const isBroadEditor = ['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
-                             hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', dependencia?.nombre)
-        
-        // Si es un editor autorizado (como Paola o Admin), usamos el ID seleccionado en el formulario
-        let targetDependenciaId = isBroadEditor ? formData.dependencia_id : dependencia?.id
+        let targetDependenciaId = isPddAdmin ? formData.dependencia_id : dependencia?.id
 
-        // Si aún no tenemos ID y tenemos una oficina, intentamos el mapeo de nombres como respaldo
         if (!targetDependenciaId && dependencia) {
             const matchingDep = todasDependencias.find(d => 
                 d.nombre.toUpperCase().trim() === dependencia.nombre.toUpperCase().trim()
@@ -245,13 +243,10 @@ export default function MetasPddPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Metas PDD</h1>
-                    <p className="text-slate-400">Seguimiento al Plan de Desarrollo Distrital</p>
+                    <h1 className="text-3xl font-bold text-foreground dark:text-white">Metas PDD</h1>
+                    <p className="text-muted-foreground">Seguimiento al Plan de Desarrollo Distrital</p>
                 </div>
-                {/* Allow creating new metas only for authorized roles */}
-                {/* Allow creating new metas for authorized roles or specific users */}
-                {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
-                  hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', dependencia?.nombre)) && (
+                {isPddAdmin && (
                     <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500 text-white">
                         <Plus className="w-4 h-4 mr-2" />
                         Nueva Meta
@@ -259,135 +254,168 @@ export default function MetasPddPage() {
                 )}
             </div>
 
-            <Card className="card-glass border-slate-800">
+            <Card className="card-glass border-border">
                 <CardHeader>
-                    <CardTitle className="text-slate-200">Metas Registradas</CardTitle>
+                    <CardTitle className="text-foreground dark:text-slate-200">Metas Registradas</CardTitle>
                     <CardDescription>
-                        {metas.length} metas asignadas a {dependencia?.nombre || 'esta vigencia'}
+                        {metas.length} metas disponibles para esta vigencia
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader className="bg-slate-900/90">
-                            <TableRow>
-                                <TableHead className="w-[100px] text-slate-300">Código</TableHead>
-                                <TableHead className="min-w-[200px] text-slate-300">Descripción</TableHead>
-                                 {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
-                                   hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', (userProfile as any).oficinas?.nombre)) && (
-                                    <TableHead className="text-slate-300">Oficina</TableHead>
-                                )}
-                                <TableHead className="text-slate-300">Unidad</TableHead>
-                                <TableHead className="text-right text-slate-300">Prog.</TableHead>
-                                <TableHead className="text-right text-slate-300">Ejec.</TableHead>
-                                <TableHead className="text-center text-slate-300">% Cumpl.</TableHead>
-                                <TableHead className="text-right text-slate-300">Acciones</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {metas.map((meta) => {
-                                const cumplimiento = meta.meta_programada && meta.meta_programada > 0
-                                    ? ((meta.meta_ejecutada || 0) / meta.meta_programada) * 100
-                                    : 0
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-muted/50">
+                                <TableRow>
+                                    <TableHead className="w-[100px] text-foreground dark:text-slate-300">Código</TableHead>
+                                    <TableHead className="min-w-[200px] text-foreground dark:text-slate-300">Descripción</TableHead>
+                                    {isPddAdmin && (
+                                        <TableHead className="text-foreground dark:text-slate-300">Oficina</TableHead>
+                                    )}
+                                    <TableHead className="text-foreground dark:text-slate-300">Unidad</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300">Prog.</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300">Ejec.</TableHead>
+                                    <TableHead className="text-center text-foreground dark:text-slate-300">% Cumpl.</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300">Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {metas.map((meta) => {
+                                    const cumplimiento = meta.meta_programada && meta.meta_programada > 0
+                                        ? ((meta.meta_ejecutada || 0) / meta.meta_programada) * 100
+                                        : 0
 
-                                return (
-                                    <TableRow key={meta.id} className="hover:bg-slate-800/50">
-                                        <TableCell className="font-medium text-blue-400">{meta.codigo_meta}</TableCell>
-                                        <TableCell className="text-slate-300">{meta.descripcion}</TableCell>
-                                        {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
-                                          hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', (userProfile as any).oficinas?.nombre)) && (
-                                            <TableCell className="text-slate-400 text-xs">{(meta as any).dependencias?.nombre || '—'}</TableCell>
-                                        )}
-                                        <TableCell className="text-slate-400">{meta.unidad_medida}</TableCell>
-                                        <TableCell className="text-right text-slate-300">{meta.meta_programada}</TableCell>
-                                        <TableCell className="text-right text-slate-300">{meta.meta_ejecutada}</TableCell>
-                                        <TableCell className="text-center">
-                                            <Badge variant={cumplimiento >= 100 ? 'verde' : cumplimiento >= 70 ? 'amarillo' : 'rojo'} className="font-mono">
-                                                {cumplimiento.toFixed(1)}%
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
-                                              hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', (userProfile as any).oficinas?.nombre)) && (
-                                                <div className="flex justify-end gap-2">
-                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(meta)} className="hover:bg-gray-200 dark:hover:bg-slate-700" title="Editar">
-                                                        <Edit className="w-4 h-4 text-gray-500 dark:text-slate-400" />
-                                                    </Button>
-                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(meta.id)} className="hover:bg-red-50 dark:hover:bg-red-900/20" title="Eliminar">
-                                                        <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
-                                                    </Button>
-                                                </div>
+                                    return (
+                                        <TableRow key={meta.id} className="hover:bg-slate-800/50">
+                                            <TableCell className="font-medium text-blue-400">{meta.codigo_meta}</TableCell>
+                                            <TableCell className="text-foreground dark:text-slate-300">{meta.descripcion}</TableCell>
+                                            {isPddAdmin && (
+                                                <TableCell className="text-muted-foreground text-xs dark:text-slate-400">{(meta as any).dependencias?.nombre || '—'}</TableCell>
                                             )}
+                                            <TableCell className="text-muted-foreground dark:text-slate-400">{meta.unidad_medida}</TableCell>
+                                            <TableCell className="text-right text-foreground dark:text-slate-300">{meta.meta_programada}</TableCell>
+                                            <TableCell className="text-right text-foreground dark:text-slate-300">{meta.meta_ejecutada}</TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge 
+                                                    variant={cumplimiento >= 100 ? 'verde' : cumplimiento >= 70 ? 'amarillo' : 'rojo'} 
+                                                    className="font-mono text-[10px]"
+                                                >
+                                                    {cumplimiento.toFixed(1)}%
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {isPddAdmin && (
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button variant="ghost" size="icon" onClick={() => handleEdit(meta)} className="hover:bg-slate-700" title="Editar">
+                                                            <Edit className="w-4 h-4 text-slate-400" />
+                                                        </Button>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(meta.id)} className="hover:bg-red-900/20" title="Eliminar">
+                                                            <Trash2 className="w-4 h-4 text-red-400" />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                                {metas.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={isPddAdmin ? 8 : 7} className="text-center py-8 text-slate-500">
+                                            No hay metas registradas.
                                         </TableCell>
                                     </TableRow>
-                                )
-                            })}
-                            {metas.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8 text-slate-500">
-                                        No hay metas registradas.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </CardContent>
             </Card>
 
             {/* Edit Dialog */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent>
+                <DialogContent className="max-w-2xl bg-slate-900 border-slate-800 text-slate-200">
                     <DialogHeader>
-                        <DialogTitle>{editingMeta ? 'Editar Meta' : 'Nueva Meta PDD'}</DialogTitle>
+                        <DialogTitle className="text-white">{editingMeta ? 'Editar Meta' : 'Nueva Meta PDD'}</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label>Código</Label>
-                            <Input value={formData.codigo_meta} onChange={e => setFormData({ ...formData, codigo_meta: e.target.value })} placeholder="Ej. 1.1.2" />
-                        </div>
-                        {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
-                          hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', (userProfile as any).oficinas?.nombre)) && (
-                            <div className="grid gap-2">
-                                <Label>Dependencia Asignada</Label>
-                                <select
-                                    className="flex h-9 w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 text-slate-200"
-                                    value={formData.dependencia_id}
-                                    onChange={e => setFormData({ ...formData, dependencia_id: e.target.value })}
-                                >
-                                    <option value="" disabled>Seleccione una dependencia...</option>
-                                    {todasDependencias.map(d => (
-                                        <option key={d.id} value={d.id}>{d.nombre}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-                        <div className="grid gap-2">
-                            <Label>Descripción</Label>
-                            <Textarea value={formData.descripcion} onChange={e => setFormData({ ...formData, descripcion: e.target.value })} placeholder="Descripción de la meta..." />
-                        </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
-                                <Label>Unidad Medida</Label>
-                                <Input value={formData.unidad_medida} onChange={e => setFormData({ ...formData, unidad_medida: e.target.value })} />
+                                <Label className="text-slate-300">Código</Label>
+                                <Input 
+                                    value={formData.codigo_meta} 
+                                    onChange={e => setFormData({ ...formData, codigo_meta: e.target.value })} 
+                                    placeholder="Ej. 1.1.2" 
+                                    className="bg-slate-950 border-slate-800"
+                                />
                             </div>
+                            {isPddAdmin && (
+                                <div className="grid gap-2">
+                                    <Label className="text-slate-300">Dependencia Asignada</Label>
+                                    <select
+                                        className="flex h-9 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 text-slate-200"
+                                        value={formData.dependencia_id}
+                                        onChange={e => setFormData({ ...formData, dependencia_id: e.target.value })}
+                                    >
+                                        <option value="" disabled>Seleccione una dependencia...</option>
+                                        {todasDependencias.map(d => (
+                                            <option key={d.id} value={d.id}>{d.nombre}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label className="text-slate-300">Descripción</Label>
+                            <Textarea 
+                                value={formData.descripcion} 
+                                onChange={e => setFormData({ ...formData, descripcion: e.target.value })} 
+                                placeholder="Descripción de la meta..." 
+                                className="bg-slate-950 border-slate-800 min-h-[100px]"
+                            />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="grid gap-2">
-                                <Label>Meta Programada</Label>
-                                <Input type="number" value={formData.meta_programada} onChange={e => setFormData({ ...formData, meta_programada: e.target.value })} />
+                                <Label className="text-slate-300">Unidad Medida</Label>
+                                <Input 
+                                    value={formData.unidad_medida} 
+                                    onChange={e => setFormData({ ...formData, unidad_medida: e.target.value })} 
+                                    className="bg-slate-950 border-slate-800"
+                                />
                             </div>
                             <div className="grid gap-2">
-                                <Label>Meta Ejecutada</Label>
-                                <Input type="number" value={formData.meta_ejecutada} onChange={e => setFormData({ ...formData, meta_ejecutada: e.target.value })} />
+                                <Label className="text-slate-300">Meta Programada</Label>
+                                <Input 
+                                    type="number" 
+                                    value={formData.meta_programada} 
+                                    onChange={e => setFormData({ ...formData, meta_programada: e.target.value })} 
+                                    className="bg-slate-950 border-slate-800"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label className="text-slate-300">Meta Ejecutada</Label>
+                                <Input 
+                                    type="number" 
+                                    value={formData.meta_ejecutada} 
+                                    onChange={e => setFormData({ ...formData, meta_ejecutada: e.target.value })} 
+                                    className="bg-slate-950 border-slate-800"
+                                />
                             </div>
                         </div>
                         <div className="grid gap-2">
-                            <Label>Observaciones</Label>
-                            <Textarea value={formData.observaciones} onChange={e => setFormData({ ...formData, observaciones: e.target.value })} />
+                            <Label className="text-slate-300">Observaciones</Label>
+                            <Textarea 
+                                value={formData.observaciones} 
+                                onChange={e => setFormData({ ...formData, observaciones: e.target.value })} 
+                                className="bg-slate-950 border-slate-800"
+                            />
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleSave} disabled={loading}>Guardar</Button>
+                        <Button variant="ghost" onClick={() => setDialogOpen(false)} className="text-slate-400 hover:text-white hover:bg-slate-800">
+                            Cancelar
+                        </Button>
+                        <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-500">
+                            Guardar
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

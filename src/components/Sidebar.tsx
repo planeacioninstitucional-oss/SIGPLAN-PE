@@ -205,7 +205,7 @@ export function Sidebar({ isOpen, toggleSidebar, userProfile }: SidebarProps) {
 
                         return (
                             <div key={section.category}>
-                                <h3 className="mb-2 px-3 text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">
+                                <h3 className="mb-2 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                                     {section.category}
                                 </h3>
                                 <ul className="space-y-1">
@@ -219,7 +219,7 @@ export function Sidebar({ isOpen, toggleSidebar, userProfile }: SidebarProps) {
                                                         'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                                                         isActive
                                                             ? 'bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-600/20 shadow-sm dark:shadow-[0_0_15px_-3px_rgba(37,99,235,0.2)]'
-                                                            : 'text-gray-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-slate-100'
+                                                            : 'text-muted-foreground hover:bg-gray-50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-slate-100'
                                                     )}
                                                 >
                                                     <item.icon

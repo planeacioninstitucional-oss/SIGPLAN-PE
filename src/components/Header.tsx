@@ -85,7 +85,7 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
 
             {/* Global Search */}
             <div className="hidden md:flex items-center relative w-64 md:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-slate-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                     type="text"
                     placeholder="Buscar instrumento o módulo..."
@@ -96,7 +96,7 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
                     }}
                     onFocus={() => setIsSearchOpen(true)}
                     onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)}
-                    className="w-full pl-9 pr-4 py-1.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-full text-sm text-gray-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 dark:placeholder:text-slate-600"
+                    className="w-full pl-9 pr-4 py-1.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-full text-sm text-foreground dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-muted-foreground"
                 />
 
                 {isSearchOpen && searchQuery.length > 0 && (
@@ -119,7 +119,7 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-center text-sm text-gray-500 dark:text-slate-500 py-4">No se encontraron resultados.</p>
+                            <p className="text-center text-sm text-muted-foreground py-4">No se encontraron resultados.</p>
                         )}
                     </div>
                 )}
@@ -129,7 +129,7 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
 
             {/* Vigencia Selector */}
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10">
-                <span className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold tracking-wider">Vigencia</span>
+                <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Vigencia</span>
                 <select
                     value={vigenciaActual?.id || ''}
                     onChange={(e) => {
@@ -173,8 +173,8 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
                     className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                 >
                     <div className="hidden text-right md:block">
-                        <p className="text-sm font-medium text-gray-900 dark:text-slate-200 leading-none">{userProfile?.nombre_completo || 'Usuario'}</p>
-                        <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">{(userProfile?.oficinas as any)?.nombre || userProfile?.cargo || 'Sin Dependencia'}</p>
+                        <p className="text-sm font-medium text-foreground dark:text-slate-200 leading-none">{userProfile?.nombre_completo || 'Usuario'}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{(userProfile?.oficinas as any)?.nombre || userProfile?.cargo || 'Sin Dependencia'}</p>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold ring-2 ring-gray-200 dark:ring-white/10">
                         {userProfile?.nombre_completo?.charAt(0) || 'U'}

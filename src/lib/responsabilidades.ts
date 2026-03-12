@@ -15,7 +15,9 @@ export const RESPONSABILIDADES_EQUIPO: Record<string, string[]> = {
         'FURAG, ITA',
         'Listado de maestros',
         'Proyecto piip',
-        'Riesgos'
+        'Riesgos',
+        'Gestion proyectos de promoción y desarrollo',
+        'Gestion de operaciones financieras'
     ],
     'SANDRA MARITZA MACHADO ROJAS': ['Plan de accion institucional']
 };
@@ -33,29 +35,23 @@ export function hasSidebarAccess(itemName: string, nombre_completo: string | nul
                 'ALUMBRADO PÚBLICO', 'ALUMBRADO PUBLICO',
                 'PLAZAS DE MERCADO',
                 'PARQUES Y ZONAS VERDES',
-                'COMPLEJO CULTURAL PANÓPTICO', 'CULTURAL PANOPTICO',
-                'BICICLETAS RUEDA POR IBAGUÉ', 'RUEDA POR IBAGUE',
                 'GERENCIA GENERAL',
                 'DIRECCIÓN OPERATIVA Y COMERCIAL',
                 'DIRECCION OPERATIVA Y COMERCIAL',
                 'DIRECCIÓN DE PROYECTOS Y SERVICIOS FINANCIEROS',
                 'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS'
             ];
-            // Permitimos si la oficina del jefe coincide con alguna de la lista
             return ofisPDD.some(o => oficinaUpper.includes(o) || o.includes(oficinaUpper));
         }
 
         if (itemName === 'Plan Acción Mun.') {
             const ofisPAM = [
                 'PARQUES Y ZONAS VERDES',
-                'COMPLEJO CULTURAL PANÓPTICO', 'CULTURAL PANOPTICO',
-                'BICICLETAS RUEDA POR IBAGUÉ', 'RUEDA POR IBAGUE',
                 'DIRECCIÓN OPERATIVA Y COMERCIAL',
                 'DIRECCION OPERATIVA Y COMERCIAL',
                 'DIRECCIÓN DE PROYECTOS Y SERVICIOS FINANCIEROS',
                 'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS'
             ];
-            // Permitimos si la oficina del jefe coincide con alguna de la lista
             return ofisPAM.some(o => oficinaUpper.includes(o) || o.includes(oficinaUpper));
         }
 
@@ -110,7 +106,6 @@ export function canViewInstrumento(instrumentoNombre: string, nombre_completo: s
     });
 }
 
-// Filtra dependencias según el instrumento
 export function getDependenciasParaInstrumento(instrumentoNombre: string, todasDependencias: any[]): any[] {
     const instUpper = instrumentoNombre.toUpperCase().trim();
 
@@ -123,7 +118,7 @@ export function getDependenciasParaInstrumento(instrumentoNombre: string, todasD
             'GESTIÓN ESTRATÉGICA', 'GESTION ESTRATEGICA',
             'HUMANA',
             'CONTROL DISCIPLINARIO',
-            'EVALUACIÓN INDEPENDIENTE', 'EVALUACION INDEPENDIENTE' // Control Interno
+            'EVALUACIÓN INDEPENDIENTE', 'EVALUACION INDEPENDIENTE'
         ];
 
         return todasDependencias.filter(dep =>
@@ -131,28 +126,39 @@ export function getDependenciasParaInstrumento(instrumentoNombre: string, todasD
         );
     }
 
-    // Si no es un instrumento especial, retorna todas
     return todasDependencias;
 }
 
 export function formatDependenciaName(name: string | null | undefined): string {
     if (!name) return '';
     const nameUpper = name.toUpperCase().trim();
-    if (nameUpper.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) return 'Dirección de Proyectos y Servicios Financieros';
-    if (nameUpper.includes('FINANCIERA')) return 'Dirección Financiera';
-    if (nameUpper.includes('HUMANA') || nameUpper.includes('SERVICIOS ADMINISTRATIVOS')) return 'Gestión Humana / Serv. Admin.';
-    if (nameUpper.includes('JURIDICA') || nameUpper.includes('JURÍDICA')) return 'Gestión Jurídica';
-    if (nameUpper.includes('OPERATIVA Y COMERCIAL')) return 'Dirección Operativa y Comercial';
-    if (nameUpper.includes('PLANEACIÓN') || nameUpper.includes('PLANEACION')) return 'Planeación Institucional';
-    if (nameUpper.includes('TECNOLÓGICA') || nameUpper.includes('TECNOLOGICA')) return 'Gestión Tecnológica';
-    if (nameUpper.includes('PANÓPTICO') || nameUpper.includes('PANOPTICO')) return 'Complejo Cultural Panóptico';
-    if (nameUpper.includes('RUEDA POR IBAGUÉ') || nameUpper.includes('RUEDA POR IBAGUE')) return 'Bicicletas Rueda por Ibagué';
+    
+    // Exact Mappings based on User's 21 dependencies
+    if (nameUpper.includes('ALUMBRADO PÚBLICO')) return 'Alumbrado Público';
+    if (nameUpper.includes('ATENCIÓN AL CIUDADANO')) return 'Atención al Ciudadano';
+    if (nameUpper.includes('COMUNICACIÓN Y PARTICIPACIÓN')) return 'Comunicación y Participación Ciudadana';
+    if (nameUpper.includes('CONTROL DISCIPLINARIO')) return 'Control Disciplinario';
+    if (nameUpper.includes('EVALUACIÓN INDEPENDIENTE')) return 'Evaluación Independiente';
+    if (nameUpper.includes('GESTIÓN COMERCIAL')) return 'Gestión Comercial';
+    if (nameUpper.includes('GESTIÓN CONTRACTUAL')) return 'Gestión Contractual';
+    if (nameUpper.includes('GESTION FINANCIERA')) return 'Gestion Financiera';
+    if (nameUpper.includes('GESTIÓN DEL SIG')) return 'Gestión del SIG';
+    if (nameUpper.includes('GESTIÓN DOCUMENTAL')) return 'Gestión Documental';
+    if (nameUpper.includes('GESTIÓN ESTRATÉGICA')) return 'Gestión Estratégica';
+    if (nameUpper.includes('GESTIÓN HUMANA')) return 'Gestión Humana';
+    if (nameUpper.includes('GESTIÓN INTEGRAL DE RIESGOS')) return 'Gestión Integral de Riesgos';
+    if (nameUpper.includes('GESTIÓN JURÍDICA')) return 'Gestión Jurídica';
+    if (nameUpper.includes('GESTIÓN TECNOLÓGICA') || nameUpper.includes('TRANSFORMACIÓN DIGITAL')) return 'Gestión Tecnológica y transformación digital';
+    if (nameUpper.includes('PARQUES Y ZONAS VERDES')) return 'Parques y Zonas Verdes';
+    if (nameUpper.includes('PLAZAS DE MERCADO')) return 'Plazas de Mercado';
+    if (nameUpper.includes('RECURSOS FÍSICOS') || nameUpper.includes('RECURSOS FISICOS')) return 'Gestion de recursos fisicos';
+    if (nameUpper.includes('RELLENO SANITARIO')) return 'Relleno Sanitario';
+    if (nameUpper.includes('PROMOCIÓN Y DESARROLLO')) return 'Gestion proyectos de promoción y desarrollo';
+    if (nameUpper.includes('OPERACIONES FINANCIERAS')) return 'Gestion de operaciones financieras';
+
     return name;
 }
 
-/**
- * Retorna los procesos que una oficina debe gestionar, y opcionalmente los IDs de dependencias (para PAM/PIIP).
- */
 export function getMisDependencias(miOficinaId: string, todosLosProcesos: any[], todasLasOficinas: any[], todasDependencias: any[] = []): any[] {
     if (!miOficinaId || !todosLosProcesos || todosLosProcesos.length === 0) return [];
 
@@ -162,13 +168,10 @@ export function getMisDependencias(miOficinaId: string, todosLosProcesos: any[],
     const ofiNombre = (miOficina.nombre || '').toUpperCase().trim();
     let subProcesosKeywords: string[] = [];
 
-    // LÓGICA DE CRUCES: Direcciones que ven procesos de otras oficinas
     if (ofiNombre.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) {
         subProcesosKeywords = [
-            'PANÓPTICO', 'PANOPTICO',
-            'RUEDA POR IBAGUÉ', 'RUEDA POR IBAGUE',
-            'OPERACIONES FINANCIERAS',
-            'PROMOCIÓN Y DESARROLLO', 'PROMOCION Y DESARROLLO'
+            'PROMOCIÓN Y DESARROLLO', 'PROMOCION Y DESARROLLO',
+            'OPERACIONES FINANCIERAS'
         ];
     } else if (ofiNombre.includes('FINANCIERA')) {
         subProcesosKeywords = [
@@ -183,16 +186,25 @@ export function getMisDependencias(miOficinaId: string, todosLosProcesos: any[],
             'COMERCIAL',
             'EMPRESARIALES'
         ];
+    } else if (ofiNombre.includes('ADMINISTRATIVA')) {
+        subProcesosKeywords = [
+            'GESTIÓN HUMANA', 'GESTION HUMANA',
+            'GESTIÓN DOCUMENTAL', 'GESTION DOCUMENTAL',
+            'RECURSOS FÍSICOS', 'RECURSOS FISICOS',
+            'GESTIÓN CONTRACTUAL', 'GESTION CONTRACTUAL'
+        ];
+    } else if (ofiNombre.includes('JURÍDICA') || ofiNombre.includes('JURIDICA')) {
+        subProcesosKeywords = [
+            'GESTIÓN JURÍDICA', 'GESTION JURIDICA'
+        ];
     }
 
     const resultsMap = new Map<string, any>();
     
-    // 1. Agregar procesos propios de la oficina
     todosLosProcesos
         .filter(p => p.oficina_id === miOficinaId)
         .forEach(p => resultsMap.set(p.id, p));
 
-    // 2. Agregar procesos por keywords
     if (subProcesosKeywords.length > 0) {
         todosLosProcesos.forEach(p => {
             const procNombre = (p.nombre || '').toUpperCase().trim();
@@ -202,18 +214,12 @@ export function getMisDependencias(miOficinaId: string, todosLosProcesos: any[],
         });
     }
 
-    // 3. LÓGICA ESPECIAL PARA PAM/PIIP:
-    // Algunos registros de PAM/PIIP usan el ID de la tabla 'dependencias' en lugar de 'procesos_institucionales'.
-    // Si encontramos una 'dependencia' que coincida con mis procesos o keywords, agregamos ese ID al mapa como "virtual" 
-    // pero marcamos que es una dependencia para que las consultas de PAM/PIIP la incluyan.
     if (todasDependencias.length > 0) {
         todasDependencias.forEach(dep => {
             const depNombre = (dep.nombre || '').toUpperCase().trim();
-            // Si la dependencia se llama igual que mi oficina
             if (depNombre.includes(ofiNombre) || ofiNombre.includes(depNombre)) {
                  resultsMap.set(dep.id, { ...dep, is_legacy_dep: true });
             }
-            // O si coincide con mis keywords (ej. 'PANOPTICO')
             if (subProcesosKeywords.some(kw => depNombre.includes(kw))) {
                 resultsMap.set(dep.id, { ...dep, is_legacy_dep: true });
             }

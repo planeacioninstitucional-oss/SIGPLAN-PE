@@ -24,11 +24,11 @@ function getPeriodsForFrecuencia(frecuencia: FrecuenciaInstrumento): string[] {
 }
 
 const FRECUENCIA_COLOR: Record<FrecuenciaInstrumento, string> = {
-    mensual: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    trimestral: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
-    cuatrimestral: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
-    semestral: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-    anual: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+    mensual: 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/20',
+    trimestral: 'bg-teal-500/10 text-teal-600 dark:text-teal-300 border-teal-500/20',
+    cuatrimestral: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20',
+    semestral: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/20',
+    anual: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20',
 }
 
 const FRECUENCIA_LABEL: Record<FrecuenciaInstrumento, string> = {
@@ -49,7 +49,7 @@ export default function MisInstrumentosPage() {
     const [piips, setPiips] = useState<any[]>([])
     const [userProfile, setUserProfile] = useState<{ id: string; rol: any; oficina_id: string | null } | null>(null)
     const [misDependenciaIds, setMisDependenciaIds] = useState<string[]>([])
-    const [misDependencias, setMisDependencias] = useState<any[]>([])
+    const [misDependencias, setMisDependencias] = useState<Dependencia[]>([])
     const [userLoaded, setUserLoaded] = useState(false)
 
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -145,7 +145,7 @@ export default function MisInstrumentosPage() {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center gap-4">
                 <FileCheck className="w-16 h-16 text-slate-700" />
-                <p className="text-slate-400">Seleccione una vigencia para ver sus instrumentos.</p>
+                <p className="text-muted-foreground">Seleccione una vigencia para ver sus instrumentos.</p>
             </div>
         )
     }
@@ -175,11 +175,11 @@ export default function MisInstrumentosPage() {
                             if (!acc[name]) acc[name] = []
                             acc[name].push(dep)
                             return acc
-                        }, {} as Record<string, any[]>)
+                        }, {} as Record<string, Dependencia[]>)
                     ).map(([groupName, groupDeps]) => {
                         const groupIds = groupDeps.map(d => d.id)
                         const instsParaGrupo = instrumentos.filter(inst => 
-                            groupDeps.some(dep => getDependenciasParaInstrumento(inst.nombre, [dep]).length > 0)
+                            groupDeps.some((dep: Dependencia) => getDependenciasParaInstrumento(inst.nombre, [dep]).length > 0)
                         )
                         const pamsParaGrupo = pams.filter(p => groupIds.includes(p.dependencia_id))
                         const piipsParaGrupo = piips.filter(p => groupIds.includes(p.dependencia_id))
@@ -249,20 +249,20 @@ export default function MisInstrumentosPage() {
                                         const pct = total > 0 ? Math.round((cumplidos / total) * 100) : 0
 
                                         return (
-                                            <Card key={`${groupName}-${inst.id}`} className="card-glass border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
+                                            <Card key={`${groupName}-${inst.id}`} className="card-glass border-border bg-white dark:bg-slate-900/40">
                                                 <CardHeader className="pb-3">
                                                     <div className="flex items-start justify-between gap-4">
                                                         <div>
                                                             <CardTitle className="text-base text-gray-900 dark:text-slate-100">{inst.nombre}</CardTitle>
                                                             {inst.descripcion && (
-                                                                <CardDescription className="text-gray-500 dark:text-slate-500 text-xs mt-1">{inst.descripcion}</CardDescription>
+                                                                <CardDescription className="text-muted-foreground dark:text-slate-500 text-xs mt-1">{inst.descripcion}</CardDescription>
                                                             )}
                                                         </div>
                                                         <div className="flex items-center gap-2 shrink-0">
                                                             <span className={cn('text-[11px] px-2 py-0.5 rounded border font-semibold', FRECUENCIA_COLOR[inst.frecuencia])}>
                                                                 {FRECUENCIA_LABEL[inst.frecuencia]}
                                                             </span>
-                                                            <span className="text-xs text-gray-500 dark:text-slate-400">{cumplidos}/{total}</span>
+                                                            <span className="text-xs text-muted-foreground dark:text-slate-400">{cumplidos}/{total}</span>
                                                         </div>
                                                     </div>
                                                     <div className="w-full h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
@@ -282,8 +282,9 @@ export default function MisInstrumentosPage() {
                                                                 <button
                                                                     key={period}
                                                                     onClick={() => {
-                                                                        // Pick first dep for click (usually there's only one main process)
-                                                                        handleClick(groupDeps[0], inst, period)
+                                                                        // Pick the dep that HAS a seguimiento, or default to the first one
+                                                                        const existingDep = groupDeps.find(d => getSeguimientoPara(d.id, inst.id, period))
+                                                                        handleClick(existingDep || groupDeps[0], inst, period)
                                                                     }}
                                                                     className={cn(
                                                                         'flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg border transition-all duration-200',
@@ -321,7 +322,7 @@ export default function MisInstrumentosPage() {
                     seguimientoExistente={selectedCell.seguimiento}
                     userRole={userProfile.rol}
                     userId={userProfile.id}
-                    onSuccess={fetchSeguimientos}
+                    onSuccess={fetchAllData}
                 />
             )}
         </div>

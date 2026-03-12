@@ -99,8 +99,8 @@ export default function PamPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Plan Acción Municipal</h1>
-                    <p className="text-gray-500 dark:text-slate-400">Seguimiento a metas y ejes estratégicos</p>
+                    <h1 className="text-3xl font-bold text-foreground dark:text-white">Plan Acción Municipal</h1>
+                    <p className="text-muted-foreground">Seguimiento a metas y ejes estratégicos</p>
                 </div>
                 {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
                     <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500 text-white">
@@ -122,16 +122,16 @@ export default function PamPage() {
                         <Table>
                             <TableHeader className="bg-gray-50/90 dark:bg-slate-900/90 border-b border-gray-200 dark:border-slate-800">
                                 <TableRow className="border-gray-200 dark:border-slate-800">
-                                    <TableHead className="text-gray-800 dark:text-slate-300 font-semibold">Eje</TableHead>
-                                    <TableHead className="min-w-[200px] text-gray-800 dark:text-slate-300 font-semibold">Programa / Meta PDD</TableHead>
+                                    <TableHead className="text-foreground dark:text-slate-300 font-semibold">Eje</TableHead>
+                                    <TableHead className="min-w-[200px] text-foreground dark:text-slate-300 font-semibold">Programa / Meta PDD</TableHead>
                                     {['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && (
                                         <TableHead className="text-gray-800 dark:text-slate-300 font-semibold">Oficina</TableHead>
                                     )}
-                                    <TableHead className="text-right text-gray-800 dark:text-slate-300 font-semibold">Meta Vig.</TableHead>
-                                    <TableHead className="text-right text-gray-800 dark:text-slate-300 font-semibold">Logro</TableHead>
-                                    <TableHead className="text-center text-gray-800 dark:text-slate-300 font-semibold">% Avance</TableHead>
-                                    <TableHead className="text-center text-gray-800 dark:text-slate-300 font-semibold">Estado</TableHead>
-                                    <TableHead className="text-right text-gray-800 dark:text-slate-300 font-semibold">Acciones</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300 font-semibold">Meta Vig.</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300 font-semibold">Logro</TableHead>
+                                    <TableHead className="text-center text-foreground dark:text-slate-300 font-semibold">% Avance</TableHead>
+                                    <TableHead className="text-center text-foreground dark:text-slate-300 font-semibold">Estado</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300 font-semibold">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

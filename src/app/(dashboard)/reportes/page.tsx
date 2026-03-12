@@ -140,8 +140,8 @@ export default function ReportesPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-end">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Reportes Gerenciales</h1>
-                    <p className="text-slate-400">Visión estratégica de la vigencia {vigenciaActual.anio}</p>
+                    <h1 className="text-3xl font-bold text-foreground dark:text-white">Reportes Gerenciales</h1>
+                    <p className="text-muted-foreground">Visión estratégica de la vigencia {vigenciaActual.anio}</p>
                 </div>
                 <Button
                     onClick={generateAiSummary}
@@ -162,7 +162,7 @@ export default function ReportesPage() {
                             Análisis Ejecutivo (IA)
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="text-slate-300 prose prose-invert mx-auto max-w-none">
+                    <CardContent className="text-foreground dark:text-slate-300 prose prose-invert mx-auto max-w-none">
                         <div className="whitespace-pre-line">{aiSummary}</div>
                     </CardContent>
                 </Card>
@@ -170,49 +170,49 @@ export default function ReportesPage() {
 
             {/* Global KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card className="card-glass border-slate-800">
+                <Card className="card-glass border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400">Avance Físico Global</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Avance Físico Global</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">{stats.promedioFisico.toFixed(1)}%</div>
-                        <p className="text-xs text-slate-500">Promedio ponderado</p>
+                        <div className="text-2xl font-bold text-foreground dark:text-white">{stats.promedioFisico.toFixed(1)}%</div>
+                        <p className="text-xs text-muted-foreground">Promedio ponderado</p>
                     </CardContent>
                 </Card>
-                <Card className="card-glass border-slate-800">
+                <Card className="card-glass border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400">Avance Financiero</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Avance Financiero</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">{stats.promedioFinanciero.toFixed(1)}%</div>
-                        <p className="text-xs text-slate-500">Ejecución presupuestal</p>
+                        <div className="text-2xl font-bold text-foreground dark:text-white">{stats.promedioFinanciero.toFixed(1)}%</div>
+                        <p className="text-xs text-muted-foreground">Ejecución presupuestal</p>
                     </CardContent>
                 </Card>
-                <Card className="card-glass border-slate-800">
+                <Card className="card-glass border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400">Instrumentos Reportados</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Instrumentos Reportados</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-white">{stats.total}</div>
-                        <p className="text-xs text-slate-500">Total monitoreado</p>
+                        <div className="text-2xl font-bold text-foreground dark:text-white">{stats.total}</div>
+                        <p className="text-xs text-muted-foreground">Total monitoreado</p>
                     </CardContent>
                 </Card>
-                <Card className="card-glass border-slate-800">
+                <Card className="card-glass border-border">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-400">Estado Crítico</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Estado Crítico</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-red-400">{stats.rojo}</div>
-                        <p className="text-xs text-slate-500">Alertas activas</p>
+                        <p className="text-xs text-muted-foreground">Alertas activas</p>
                     </CardContent>
                 </Card>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Chart: Semáforo Distribution */}
-                <Card className="card-glass border-slate-800 lg:col-span-1">
+                <Card className="card-glass border-border lg:col-span-1">
                     <CardHeader>
-                        <CardTitle className="text-slate-200">Estado General</CardTitle>
+                        <CardTitle className="text-foreground dark:text-slate-200">Estado General</CardTitle>
                         <CardDescription>Distribución de cumplimiento en instrumentos</CardDescription>
                     </CardHeader>
                     <CardContent className="h-[300px]">
@@ -242,26 +242,26 @@ export default function ReportesPage() {
                 </Card>
 
                 {/* Leaderboard */}
-                <Card className="card-glass border-slate-800 lg:col-span-2">
+                <Card className="card-glass border-border lg:col-span-2">
                     <CardHeader>
-                        <CardTitle className="text-slate-200">Ranking de Cumplimiento</CardTitle>
+                        <CardTitle className="text-foreground dark:text-slate-200">Ranking de Cumplimiento</CardTitle>
                         <CardDescription>Desempeño por dependencia (Score de Eficiencia)</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
-                                <TableRow className="border-slate-800">
-                                    <TableHead className="text-slate-300">Dependencia</TableHead>
-                                    <TableHead className="text-right text-slate-300">Entregas</TableHead>
-                                    <TableHead className="text-right text-slate-300">Verdes</TableHead>
-                                    <TableHead className="text-right text-slate-300">Rojos</TableHead>
-                                    <TableHead className="text-right text-slate-300">Score</TableHead>
+                                <TableRow className="border-border">
+                                    <TableHead className="text-foreground dark:text-slate-300">Dependencia</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300">Entregas</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300">Verdes</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300">Rojos</TableHead>
+                                    <TableHead className="text-right text-foreground dark:text-slate-300">Score</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {dependencyStats.slice(0, 5).map((dep, i) => (
-                                    <TableRow key={i} className="border-slate-800">
-                                        <TableCell className="text-slate-300 font-medium">
+                                    <TableRow key={i} className="border-border">
+                                        <TableCell className="text-foreground dark:text-slate-300 font-medium">
                                             <div className="flex items-center gap-2">
                                                 {i === 0 && <span className="text-yellow-500">🥇</span>}
                                                 {i === 1 && <span className="text-slate-400">🥈</span>}
@@ -269,7 +269,7 @@ export default function ReportesPage() {
                                                 {dep.name}
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-right text-slate-400">{dep.total}</TableCell>
+                                        <TableCell className="text-right text-muted-foreground">{dep.total}</TableCell>
                                         <TableCell className="text-right text-green-400">{dep.verde}</TableCell>
                                         <TableCell className="text-right text-red-400">{dep.rojo}</TableCell>
                                         <TableCell className="text-right">

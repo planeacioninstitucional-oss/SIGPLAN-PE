@@ -42,18 +42,18 @@ function getPeriodsForFrecuencia(frecuencia: FrecuenciaInstrumento): string[] {
 }
 
 const FRECUENCIA_BADGE: Record<FrecuenciaInstrumento, { label: string; color: string }> = {
-    mensual: { label: 'Mensual', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-    trimestral: { label: 'Trimestral', color: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
-    cuatrimestral: { label: 'Cuatrimestral', color: 'bg-violet-500/20 text-violet-300 border-violet-500/30' },
-    semestral: { label: 'Semestral', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-    anual: { label: 'Anual', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
+    mensual: { label: 'Mensual', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/20' },
+    trimestral: { label: 'Trimestral', color: 'bg-teal-500/10 text-teal-600 dark:text-teal-300 border-teal-500/20' },
+    cuatrimestral: { label: 'Cuatrimestral', color: 'bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20' },
+    semestral: { label: 'Semestral', color: 'bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/20' },
+    anual: { label: 'Anual', color: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20' },
 }
 
 const SEMAFORO_STATS_CONFIG = [
     { key: 'verde', label: 'Cumplidos', icon: CheckCircle2, color: 'text-green-400' },
     { key: 'amarillo', label: 'Parciales', icon: AlertCircle, color: 'text-yellow-400' },
     { key: 'rojo', label: 'Sin cumplir', icon: XCircle, color: 'text-red-400' },
-    { key: 'gris', label: 'Sin reporte', icon: Circle, color: 'text-slate-400' },
+    { key: 'gris', label: 'Sin reporte', icon: Circle, color: 'text-muted-foreground' },
 ] as const
 
 export default function SeguimientosPage() {
@@ -202,9 +202,9 @@ export default function SeguimientosPage() {
     if (!vigenciaActual) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center gap-4">
-                <BarChart3 className="w-16 h-16 text-slate-700" />
-                <h2 className="text-xl font-semibold text-slate-300">Seleccione una vigencia</h2>
-                <p className="text-slate-500">Use el selector de vigencia en el header para continuar.</p>
+                <BarChart3 className="w-16 h-16 text-muted-foreground" />
+                <h2 className="text-xl font-semibold text-foreground dark:text-slate-300">Seleccione una vigencia</h2>
+                <p className="text-muted-foreground">Use el selector de vigencia en el header para continuar.</p>
             </div>
         )
     }
@@ -214,11 +214,11 @@ export default function SeguimientosPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-foreground dark:text-white flex items-center gap-3">
                         <BarChart3 className="w-8 h-8 text-blue-500 dark:text-blue-400" />
                         Mesa de Control
                     </h1>
-                    <p className="text-gray-500 dark:text-slate-400 mt-1">
+                    <p className="text-muted-foreground mt-1">
                         Instrumentos de Planeación — Vigencia <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span>
                     </p>
                 </div>
@@ -235,8 +235,8 @@ export default function SeguimientosPage() {
                         <CardContent className="p-4 flex items-center gap-3">
                             <Icon className={cn('w-8 h-8', color)} />
                             <div>
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats[key]}</p>
-                                <p className="text-xs text-gray-500 dark:text-slate-400">{label}</p>
+                                <p className="text-2xl font-bold text-foreground dark:text-white">{stats[key]}</p>
+                                <p className="text-xs text-muted-foreground">{label}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -245,7 +245,7 @@ export default function SeguimientosPage() {
 
             {/* Instrument Selector — horizontal pills */}
             <div className="space-y-2">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Instrumento de Planeación</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Instrumento de Planeación</p>
                 <div className="flex flex-wrap gap-2">
                     {visibleInstrumentos.map((inst) => {
                         const isSelected = inst.id === selectedInstrumentoId
@@ -259,7 +259,7 @@ export default function SeguimientosPage() {
                                     'group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border',
                                     isSelected
                                         ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-200 dark:border-blue-500/50 text-blue-700 dark:text-white shadow-[0_0_20px_-5px_rgba(37,99,235,0.2)] dark:shadow-[0_0_20px_-5px_rgba(37,99,235,0.5)]'
-                                        : 'bg-white dark:bg-slate-900/60 border-gray-200 dark:border-slate-800 text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800/80',
+                                        : 'bg-white dark:bg-slate-900/60 border-border dark:border-slate-800 text-foreground dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-800/80',
                                 )}
                             >
                                 <span className="truncate max-w-[220px]">{inst.nombre}</span>
@@ -280,10 +280,10 @@ export default function SeguimientosPage() {
                 <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                            <CardTitle className="text-lg text-gray-900 dark:text-slate-100 flex items-center gap-2">
+                            <CardTitle className="text-lg text-foreground dark:text-slate-100 flex items-center gap-2">
                                 {currentInstrumento?.nombre || '—'}
                             </CardTitle>
-                            <CardDescription className="text-gray-500 dark:text-slate-400">
+                            <CardDescription className="text-muted-foreground">
                                 {currentInstrumento?.descripcion || 'Seleccione un instrumento'}
                                 {currentInstrumento && (
                                     <span className={cn('ml-2 text-[11px] px-2 py-0.5 rounded border font-semibold',
@@ -305,12 +305,12 @@ export default function SeguimientosPage() {
 
                         <Table wrapperClassName="max-h-[calc(100vh-320px)] scrollbar-thin scrollbar-thumb-slate-700">
                             <TableHeader className="sticky top-0 z-10 bg-gray-50/95 dark:bg-slate-900/95 backdrop-blur-sm">
-                                <TableRow className="border-gray-200 dark:border-slate-800 hover:bg-transparent">
-                                    <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-gray-50/95 dark:bg-slate-900/95 z-20 border-r border-gray-200 dark:border-slate-800 text-gray-800 dark:text-slate-300 font-bold py-4 pl-5">
+                                <TableRow className="border-border dark:border-slate-800 hover:bg-transparent">
+                                    <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-gray-50/95 dark:bg-slate-900/95 z-20 border-r border-border dark:border-slate-800 text-foreground dark:text-slate-300 font-bold py-4 pl-5">
                                         Dependencia / Oficina
                                     </TableHead>
                                     {periods.map((period) => (
-                                        <TableHead key={period} className="text-center min-w-[110px] text-gray-500 dark:text-slate-400 font-semibold text-xs uppercase tracking-wide py-4">
+                                        <TableHead key={period} className="text-center min-w-[110px] text-muted-foreground font-semibold text-xs uppercase tracking-wide py-4">
                                             {period}
                                         </TableHead>
                                     ))}
@@ -333,7 +333,7 @@ export default function SeguimientosPage() {
                                             'hover:bg-blue-50/50 dark:hover:bg-slate-800/40'
                                         )}
                                     >
-                                        <TableCell className="font-medium text-gray-900 dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-950 z-10 border-r border-gray-200 dark:border-slate-800 py-3 pl-5 group-hover:bg-blue-50/50 dark:group-hover:bg-slate-900/80">
+                                        <TableCell className="font-medium text-foreground dark:text-slate-200 sticky left-0 bg-white dark:bg-slate-950 z-10 border-r border-border dark:border-slate-800 py-3 pl-5 group-hover:bg-blue-50/50 dark:group-hover:bg-slate-900/80">
                                             <div className="flex flex-col gap-0.5">
                                                 <span className="text-sm font-semibold line-clamp-2 max-w-[240px]">{formatDependenciaName(dep.nombre)}</span>
                                             </div>
