@@ -1,0 +1,2 @@
+﻿src/app/(dashboard)/metas-pdd/page.tsx(105,91): error TS7006: Parameter 'n' implicitly has an 'any' type.
+src/app/(dashboard)/metas-pdd/page.tsx(106,91): error TS7006: Parameter 'n' implicitly has an 'any' type.

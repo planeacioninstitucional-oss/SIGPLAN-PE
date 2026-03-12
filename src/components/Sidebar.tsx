@@ -127,7 +127,7 @@ const MENU_ITEMS: MenuSection[] = [
                 name: 'Importar Excel',
                 icon: FileSpreadsheet,
                 href: '/admin/importar',
-                roles: ['super_admin', 'equipo_planeacion']
+                roles: ['super_admin', 'equipo_planeacion', 'jefe_oficina']
             },
             {
                 name: 'Configuración',

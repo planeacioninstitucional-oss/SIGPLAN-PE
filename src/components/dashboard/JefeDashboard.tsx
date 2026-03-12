@@ -38,11 +38,21 @@ export function JefeDashboard({ profile }: { profile: Perfil }) {
                 setLoading(false)
                 return
             }
+            const [instRes, segRes, pamRes, piipRes, depRes, ofisRes, procsRes] = await Promise.all([
+                supabase.from('instrumentos').select('*').eq('activo', true),
+                supabase.from('seguimientos').select('*').eq('vigencia_id', vigenciaActual.id),
+                supabase.from('plan_accion_municipal').select('*').eq('vigencia_id', vigenciaActual.id),
+                supabase.from('piip').select('*').eq('vigencia_id', vigenciaActual.id),
+                supabase.from('dependencias').select('*'),
+                supabase.from('oficinas').select('*'),
+                supabase.from('procesos_institucionales').select('*')
+            ])
 
-            const { data: todosProcesos } = await supabase.from('procesos_institucionales').select('*')
-            const { data: todasOficinas } = await supabase.from('oficinas').select('*')
+            const todasDeps = depRes.data || []
+            const todasOfis = ofisRes.data || []
+            const todosProcs = procsRes.data || []
             
-            const misDeps = (todosProcesos && todasOficinas) ? getMisDependencias(profile.oficina_id, todosProcesos, todasOficinas) : []
+            const misDeps = getMisDependencias(profile.oficina_id, todosProcs, todasOfis, todasDeps)
             const misDepsIds = misDeps.map(d => d.id)
 
             if (misDepsIds.length === 0) {
@@ -50,35 +60,30 @@ export function JefeDashboard({ profile }: { profile: Perfil }) {
                 return
             }
 
-            const [instRes, segRes] = await Promise.all([
-                supabase.from('instrumentos').select('*').eq('activo', true),
-                supabase.from('seguimientos')
-                    .select('*')
-                    .eq('vigencia_id', vigenciaActual.id)
-                    .in('dependencia_id', misDepsIds)
-            ])
-
             const allInsts = instRes.data || []
-            const segs = segRes.data || []
+            const segs = (segRes.data || []).filter(s => misDepsIds.includes(s.dependencia_id))
+            const pams = (pamRes.data || []).filter(p => misDepsIds.includes(p.dependencia_id))
+            const piips = (piipRes.data || []).filter(p => misDepsIds.includes(p.dependencia_id))
 
-            let totalPeriods = 0
-            let greenPeriods = 0
+            let totalPoints = 0
+            let greenPoints = 0
             let obsCount = 0
             const pendingList: any[] = []
 
             const currDate = new Date().toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })
 
+            // 1. Process standard Instruments
             misDeps.forEach(dep => {
                 const instsParaDep = allInsts.filter(inst => getDependenciasParaInstrumento(inst.nombre, [dep]).length > 0)
                 
                 instsParaDep.forEach(inst => {
                     const periods = getPeriodsForFrecuencia(inst.frecuencia)
-                    totalPeriods += periods.length
+                    totalPoints += periods.length
 
                     periods.forEach(p => {
                         const seg = segs.find(s => s.dependencia_id === dep.id && s.instrumento_id === inst.id && s.periodo_corte === p)
                         if (seg && seg.estado_semaforo === 'verde') {
-                            greenPeriods++
+                            greenPoints++
                         } else {
                             if (seg && (seg.estado_semaforo === 'amarillo' || seg.estado_semaforo === 'rojo')) {
                                 obsCount++
@@ -86,7 +91,7 @@ export function JefeDashboard({ profile }: { profile: Perfil }) {
                             pendingList.push({
                                 name: `[${formatDependenciaName(dep.nombre)}] ${inst.nombre}`,
                                 deadline: currDate,
-                                status: 'pending',
+                                status: (seg && seg.estado_semaforo === 'rojo') ? 'alert' : 'pending',
                                 type: p
                             })
                         }
@@ -94,10 +99,48 @@ export function JefeDashboard({ profile }: { profile: Perfil }) {
                 })
             })
 
+            // 2. Process PAM (Plan Acción Municipal)
+            pams.forEach(pam => {
+                totalPoints++
+                if (pam.estado === 'verde') {
+                    greenPoints++
+                } else {
+                    if (pam.estado === 'amarillo' || pam.estado === 'rojo') {
+                        obsCount++
+                    }
+                    const depObj = misDeps.find(d => d.id === pam.dependencia_id)
+                    pendingList.push({
+                        name: `[${formatDependenciaName(depObj?.nombre || 'PAM')}] ${pam.programa?.substring(0, 40)}...`,
+                        deadline: currDate,
+                        status: pam.estado === 'rojo' ? 'alert' : 'pending',
+                        type: 'Plan Acción'
+                    })
+                }
+            })
+
+            // 3. Process PIIP (Proyectos)
+            piips.forEach(piip => {
+                totalPoints++
+                if (piip.estado === 'verde') {
+                    greenPoints++
+                } else {
+                    if (piip.estado === 'amarillo' || piip.estado === 'rojo') {
+                        obsCount++
+                    }
+                    const depObj = misDeps.find(d => d.id === piip.dependencia_id)
+                    pendingList.push({
+                        name: `[${formatDependenciaName(depObj?.nombre || 'PIIP')}] ${piip.nombre_proyecto?.substring(0, 40)}...`,
+                        deadline: currDate,
+                        status: piip.estado === 'rojo' ? 'alert' : 'pending',
+                        type: 'Proyecto PIIP'
+                    })
+                }
+            })
+
             setData({
-                avance: totalPeriods > 0 ? Math.round((greenPeriods / totalPeriods) * 100) : 0,
+                avance: totalPoints > 0 ? Math.round((greenPoints / totalPoints) * 100) : 0,
                 pendientes: pendingList,
-                reportesOk: greenPeriods,
+                reportesOk: greenPoints,
                 observaciones: obsCount
             })
             setLoading(false)

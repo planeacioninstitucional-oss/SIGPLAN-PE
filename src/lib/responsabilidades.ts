@@ -53,11 +53,16 @@ export function hasSidebarAccess(itemName: string, nombre_completo: string | nul
                 'DIRECCIÓN OPERATIVA Y COMERCIAL',
                 'DIRECCION OPERATIVA Y COMERCIAL',
                 'DIRECCIÓN DE PROYECTOS Y SERVICIOS FINANCIEROS',
-                'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS',
-                'DIRECCIÓN FINANCIERA', 'DIRECCION FINANCIERA'
+                'DIRECCION DE PROYECTOS Y SERVICIOS FINANCIEROS'
             ];
             // Permitimos si la oficina del jefe coincide con alguna de la lista
             return ofisPAM.some(o => oficinaUpper.includes(o) || o.includes(oficinaUpper));
+        }
+
+        if (itemName === 'Importar Excel') {
+            const allowedNames = ['PAOLA ANDREA OYOLA ALVIS'];
+            const nameUpper = (nombre_completo || '').toUpperCase().trim();
+            return allowedNames.some(name => nameUpper.includes(name));
         }
 
         return true;
@@ -68,9 +73,14 @@ export function hasSidebarAccess(itemName: string, nombre_completo: string | nul
     const nameUpper = nombre_completo.toUpperCase().trim();
     const misResponsabilidades = RESPONSABILIDADES_EQUIPO[nameUpper] || [];
 
-    const itemsProtegidos = ['Metas PDD', 'Proyectos (PIIP)', 'Plan Acción Mun.'];
+    const itemsProtegidos = ['Metas PDD', 'Proyectos (PIIP)', 'Plan Acción Mun.', 'Importar Excel'];
     if (!itemsProtegidos.includes(itemName)) {
         return true;
+    }
+
+    if (itemName === 'Importar Excel') {
+        const allowedNames = ['PAOLA ANDREA OYOLA ALVIS'];
+        return allowedNames.some(name => nameUpper.includes(name));
     }
 
     if (itemName === 'Plan Acción Mun.') {
@@ -128,23 +138,22 @@ export function getDependenciasParaInstrumento(instrumentoNombre: string, todasD
 export function formatDependenciaName(name: string | null | undefined): string {
     if (!name) return '';
     const nameUpper = name.toUpperCase().trim();
+    if (nameUpper.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) return 'Dirección de Proyectos y Servicios Financieros';
     if (nameUpper.includes('FINANCIERA')) return 'Dirección Financiera';
     if (nameUpper.includes('HUMANA') || nameUpper.includes('SERVICIOS ADMINISTRATIVOS')) return 'Gestión Humana / Serv. Admin.';
     if (nameUpper.includes('JURIDICA') || nameUpper.includes('JURÍDICA')) return 'Gestión Jurídica';
-    if (nameUpper.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) return 'Dirección de Proyectos y Servicios Financieros';
     if (nameUpper.includes('OPERATIVA Y COMERCIAL')) return 'Dirección Operativa y Comercial';
     if (nameUpper.includes('PLANEACIÓN') || nameUpper.includes('PLANEACION')) return 'Planeación Institucional';
     if (nameUpper.includes('TECNOLÓGICA') || nameUpper.includes('TECNOLOGICA')) return 'Gestión Tecnológica';
+    if (nameUpper.includes('PANÓPTICO') || nameUpper.includes('PANOPTICO')) return 'Complejo Cultural Panóptico';
+    if (nameUpper.includes('RUEDA POR IBAGUÉ') || nameUpper.includes('RUEDA POR IBAGUE')) return 'Bicicletas Rueda por Ibagué';
     return name;
 }
 
 /**
- * Retorna los procesos que una oficina debe gestionar.
- * @param miOficinaId ID de la oficina del usuario (desde el perfil)
- * @param todosLosProcesos Lista completa de procesos_institucionales (con oficina_id)
- * @param todasLasOficinas Lista completa de oficinas (para buscar por nombre)
+ * Retorna los procesos que una oficina debe gestionar, y opcionalmente los IDs de dependencias (para PAM/PIIP).
  */
-export function getMisDependencias(miOficinaId: string, todosLosProcesos: any[], todasLasOficinas: any[]): any[] {
+export function getMisDependencias(miOficinaId: string, todosLosProcesos: any[], todasLasOficinas: any[], todasDependencias: any[] = []): any[] {
     if (!miOficinaId || !todosLosProcesos || todosLosProcesos.length === 0) return [];
 
     const miOficina = todasLasOficinas.find(o => o.id === miOficinaId);
@@ -154,7 +163,14 @@ export function getMisDependencias(miOficinaId: string, todosLosProcesos: any[],
     let subProcesosKeywords: string[] = [];
 
     // LÓGICA DE CRUCES: Direcciones que ven procesos de otras oficinas
-    if (ofiNombre.includes('FINANCIERA') || ofiNombre.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) {
+    if (ofiNombre.includes('PROYECTOS Y SERVICIOS FINANCIEROS')) {
+        subProcesosKeywords = [
+            'PANÓPTICO', 'PANOPTICO',
+            'RUEDA POR IBAGUÉ', 'RUEDA POR IBAGUE',
+            'OPERACIONES FINANCIERAS',
+            'PROMOCIÓN Y DESARROLLO', 'PROMOCION Y DESARROLLO'
+        ];
+    } else if (ofiNombre.includes('FINANCIERA')) {
         subProcesosKeywords = [
             'GESTIÓN FINANCIERA', 'GESTION FINANCIERA'
         ];
@@ -169,20 +185,37 @@ export function getMisDependencias(miOficinaId: string, todosLosProcesos: any[],
         ];
     }
 
-    // El usuario siempre ve los procesos de su propia oficina
     const resultsMap = new Map<string, any>();
     
-    // 1. Agregar procesos propios
+    // 1. Agregar procesos propios de la oficina
     todosLosProcesos
         .filter(p => p.oficina_id === miOficinaId)
         .forEach(p => resultsMap.set(p.id, p));
 
-    // 2. Agregar procesos por keywords (la "lógica" de cruces)
+    // 2. Agregar procesos por keywords
     if (subProcesosKeywords.length > 0) {
         todosLosProcesos.forEach(p => {
             const procNombre = (p.nombre || '').toUpperCase().trim();
             if (subProcesosKeywords.some(kw => procNombre.includes(kw))) {
                 resultsMap.set(p.id, p);
+            }
+        });
+    }
+
+    // 3. LÓGICA ESPECIAL PARA PAM/PIIP:
+    // Algunos registros de PAM/PIIP usan el ID de la tabla 'dependencias' en lugar de 'procesos_institucionales'.
+    // Si encontramos una 'dependencia' que coincida con mis procesos o keywords, agregamos ese ID al mapa como "virtual" 
+    // pero marcamos que es una dependencia para que las consultas de PAM/PIIP la incluyan.
+    if (todasDependencias.length > 0) {
+        todasDependencias.forEach(dep => {
+            const depNombre = (dep.nombre || '').toUpperCase().trim();
+            // Si la dependencia se llama igual que mi oficina
+            if (depNombre.includes(ofiNombre) || ofiNombre.includes(depNombre)) {
+                 resultsMap.set(dep.id, { ...dep, is_legacy_dep: true });
+            }
+            // O si coincide con mis keywords (ej. 'PANOPTICO')
+            if (subProcesosKeywords.some(kw => depNombre.includes(kw))) {
+                resultsMap.set(dep.id, { ...dep, is_legacy_dep: true });
             }
         });
     }

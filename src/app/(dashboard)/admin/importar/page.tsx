@@ -273,6 +273,14 @@ export default function ImportarPage() {
                     }
                 }
 
+                // Asegurar que campos requeridos no queden nulos para evitar 'not-null constraint' en la BD
+                const strictNumberFields = ['ejecutado_acumulado', 'presupuesto_ejecutado', 'logro_vigencia', 'logro_acumulado']
+                for (const sf of strictNumberFields) {
+                    if (sf in processed && processed[sf] === null) {
+                        processed[sf] = 0
+                    }
+                }
+
                 return processed
             })
 

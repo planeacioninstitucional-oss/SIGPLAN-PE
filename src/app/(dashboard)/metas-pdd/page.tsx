@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Loader2, Plus, Target, CheckCircle2 } from 'lucide-react'
+import { Loader2, Plus, Target, CheckCircle2, Trash2, Edit } from 'lucide-react'
 import type { MetasPdd, RolUsuario, Dependencia } from '@/types/database'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -97,13 +97,39 @@ export default function MetasPddPage() {
                 }
             }
 
-            const { data, error } = await query.order('codigo_meta')
+            const { data, error } = await query
             if (error) throw error
-            setMetas(data || [])
+            
+            // Ordenamiento natural (ej: 1.2 antes que 1.10)
+            const sortedData = (data || []).sort((a, b) => {
+                const aParts = (a.codigo_meta || '').toString().trim().split(/[\.-]/).map((n: string) => parseInt(n) || 0)
+                const bParts = (b.codigo_meta || '').toString().trim().split(/[\.-]/).map((n: string) => parseInt(n) || 0)
+                const len = Math.max(aParts.length, bParts.length)
+                for (let i = 0; i < len; i++) {
+                    const av = aParts[i] || 0
+                    const bv = bParts[i] || 0
+                    if (av !== bv) return av - bv
+                }
+                return (a.codigo_meta || '').localeCompare(b.codigo_meta || '')
+            })
+
+            setMetas(sortedData)
         } catch (error) {
             toast.error('Error cargando metas')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('¿Estás seguro de eliminar esta meta? Esta acción no se puede deshacer.')) return
+        try {
+            const { error } = await supabase.from('metas_pdd').delete().eq('id', id)
+            if (error) throw error
+            toast.success('Meta eliminada correctamente')
+            fetchMetas()
+        } catch (error) {
+            toast.error('Error al eliminar la meta')
         }
     }
 
@@ -282,9 +308,14 @@ export default function MetasPddPage() {
                                         <TableCell className="text-right">
                                             {(['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') || 
                                               hasSidebarAccess('Metas PDD', userProfile?.nombre_completo, userProfile?.rol || '', (userProfile as any).oficinas?.nombre)) && (
-                                                <Button variant="ghost" size="sm" onClick={() => handleEdit(meta)}>
-                                                    Editar
-                                                </Button>
+                                                <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEdit(meta)} className="hover:bg-gray-200 dark:hover:bg-slate-700" title="Editar">
+                                                        <Edit className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(meta.id)} className="hover:bg-red-50 dark:hover:bg-red-900/20" title="Eliminar">
+                                                        <Trash2 className="w-4 h-4 text-red-500 dark:text-red-400" />
+                                                    </Button>
+                                                </div>
                                             )}
                                         </TableCell>
                                     </TableRow>

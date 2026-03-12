@@ -45,6 +45,8 @@ export default function MisInstrumentosPage() {
 
     const [instrumentos, setInstrumentos] = useState<Instrumento[]>([])
     const [seguimientos, setSeguimientos] = useState<Seguimiento[]>([])
+    const [pams, setPams] = useState<any[]>([])
+    const [piips, setPiips] = useState<any[]>([])
     const [userProfile, setUserProfile] = useState<{ id: string; rol: any; oficina_id: string | null } | null>(null)
     const [misDependenciaIds, setMisDependenciaIds] = useState<string[]>([])
     const [misDependencias, setMisDependencias] = useState<any[]>([])
@@ -74,77 +76,52 @@ export default function MisInstrumentosPage() {
         fetchUser()
     }, [])
 
-    const fetchSeguimientos = useCallback(async () => {
-        if (!vigenciaActual || !userLoaded) return
+    const fetchAllData = useCallback(async () => {
+        if (!vigenciaActual || !userLoaded || !userProfile?.oficina_id) return
         
-        // If there's no dependency, no seguimientos to load for the single view
-        if (misDependenciaIds.length === 0) {
-            setSeguimientos([])
-            return
-        }
-
         setLoading(true)
         try {
-            const { data, error } = await supabase
-                .from('seguimientos')
-                .select('*')
-                .eq('vigencia_id', vigenciaActual.id)
-                .in('dependencia_id', misDependenciaIds)
-            if (error) throw error
-            setSeguimientos(data ?? [])
-        } catch {
-            toast.error('Error cargando seguimientos')
+            const [procsRes, ofisRes, depsRes] = await Promise.all([
+                supabase.from('procesos_institucionales').select('*'),
+                supabase.from('oficinas').select('*'),
+                supabase.from('dependencias').select('*')
+            ])
+            
+            if (procsRes.data && ofisRes.data) {
+                const todasDeps = depsRes.data || []
+                const misDepsData = getMisDependencias(userProfile.oficina_id, procsRes.data, ofisRes.data, todasDeps)
+                const depIds = misDepsData.map(d => d.id)
+                setMisDependenciaIds(depIds)
+                setMisDependencias(misDepsData)
+
+                const [instRes, segRes, pamRes, piipRes] = await Promise.all([
+                    supabase.from('instrumentos').select('*').eq('activo', true).order('orden'),
+                    supabase.from('seguimientos').select('*').eq('vigencia_id', vigenciaActual.id).in('dependencia_id', depIds),
+                    supabase.from('plan_accion_municipal').select('*').eq('vigencia_id', vigenciaActual.id).in('dependencia_id', depIds),
+                    supabase.from('piip').select('*').eq('vigencia_id', vigenciaActual.id).in('dependencia_id', depIds)
+                ])
+
+                if (instRes.data) {
+                    const aplicables = instRes.data.filter(inst => {
+                        const validDeps = getDependenciasParaInstrumento(inst.nombre, misDepsData)
+                        return validDeps.length > 0
+                    })
+                    setInstrumentos(aplicables)
+                }
+                if (segRes.data) setSeguimientos(segRes.data)
+                if (pamRes.data) setPams(pamRes.data)
+                if (piipRes.data) setPiips(piipRes.data)
+            }
+        } catch (error) {
+            toast.error('Error cargando datos')
         } finally {
             setLoading(false)
         }
-    }, [vigenciaActual, userLoaded, misDependenciaIds])
+    }, [vigenciaActual, userLoaded, userProfile])
 
     useEffect(() => {
-        if (!vigenciaActual || !userLoaded) return
-        
-        const fetchInstrumentos = async () => {
-            setLoading(true)
-            try {
-                const { data, error } = await supabase
-                    .from('instrumentos')
-                    .select('*')
-                    .eq('activo', true)
-                    .order('orden')
-                if (error) throw error
-
-                let allInsts = data ?? []
-
-                if (userProfile?.oficina_id) {
-                    const { data: todosProcesos } = await supabase.from('procesos_institucionales').select('*')
-                    const { data: todasOficinas } = await supabase.from('oficinas').select('*')
-                    
-                    if (todosProcesos && todasOficinas) {
-                        const misDepsData = getMisDependencias(userProfile.oficina_id, todosProcesos, todasOficinas)
-                        setMisDependenciaIds(misDepsData.map(d => d.id))
-                        setMisDependencias(misDepsData)
-
-                        const aplicables = allInsts.filter(inst => {
-                            const validDeps = getDependenciasParaInstrumento(inst.nombre, misDepsData)
-                            return validDeps.length > 0
-                        })
-                        setInstrumentos(aplicables)
-                        return
-                    }
-                }
-                
-                // If it's an admin or user with no dependency
-                setInstrumentos(allInsts)
-
-            } catch {
-                toast.error('Error cargando instrumentos')
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchInstrumentos()
-    }, [vigenciaActual, userProfile])
-
-    useEffect(() => { fetchSeguimientos() }, [fetchSeguimientos])
+        fetchAllData()
+    }, [fetchAllData])
 
     const seguimientosMap = useMemo(() => {
         const map = new Map<string, Seguimiento>()
@@ -192,25 +169,87 @@ export default function MisInstrumentosPage() {
                 </div>
             ) : (
                 <div className="space-y-10">
-                    {misDependencias.map(dep => {
-                        const instsParaDep = instrumentos.filter(inst => getDependenciasParaInstrumento(inst.nombre, [dep]).length > 0)
-                        if (instsParaDep.length === 0) return null
+                    {Object.entries(
+                        misDependencias.reduce((acc, dep) => {
+                            const name = formatDependenciaName(dep.nombre)
+                            if (!acc[name]) acc[name] = []
+                            acc[name].push(dep)
+                            return acc
+                        }, {} as Record<string, any[]>)
+                    ).map(([groupName, groupDeps]) => {
+                        const groupIds = groupDeps.map(d => d.id)
+                        const instsParaGrupo = instrumentos.filter(inst => 
+                            groupDeps.some(dep => getDependenciasParaInstrumento(inst.nombre, [dep]).length > 0)
+                        )
+                        const pamsParaGrupo = pams.filter(p => groupIds.includes(p.dependencia_id))
+                        const piipsParaGrupo = piips.filter(p => groupIds.includes(p.dependencia_id))
+
+                        if (instsParaGrupo.length === 0 && pamsParaGrupo.length === 0 && piipsParaGrupo.length === 0) return null
 
                         return (
-                            <div key={dep.id} className="space-y-4">
+                            <div key={groupName} className="space-y-4">
                                 <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800 dark:text-slate-100">
                                     <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
-                                    Proceso: {formatDependenciaName(dep.nombre)}
+                                    Proceso: {groupName}
                                 </h2>
                                 <div className="grid gap-4">
-                                    {instsParaDep.map((inst) => {
+                                    {/* 1. PAM Cards */}
+                                    {pamsParaGrupo.map((pam) => (
+                                        <Card key={`pam-${pam.id}`} className="card-glass border-blue-200/50 dark:border-blue-500/20 bg-blue-50/10 dark:bg-blue-900/10 border-l-4 border-l-blue-500">
+                                            <CardHeader className="py-3 px-5">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <CardTitle className="text-sm font-bold text-blue-700 dark:text-blue-300 uppercase tracking-tighter">Plan de Acción Municipal</CardTitle>
+                                                        <CardDescription className="text-xs text-gray-600 dark:text-slate-400 mt-1 line-clamp-1">{pam.programa}</CardDescription>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-600 dark:text-blue-300 uppercase">Estado General</span>
+                                                        <SemaforoCell estado={pam.estado || 'gris'} showText className="h-7" />
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                        </Card>
+                                    ))}
+
+                                    {/* 2. PIIP Cards */}
+                                    {piipsParaGrupo.map((piip) => (
+                                        <Card key={`piip-${piip.id}`} className="card-glass border-emerald-200/50 dark:border-emerald-500/20 bg-emerald-50/10 dark:bg-emerald-900/10 border-l-4 border-l-emerald-500">
+                                            <CardHeader className="py-3 px-5">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <CardTitle className="text-sm font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-tighter">Proyecto PIIP</CardTitle>
+                                                        <CardDescription className="text-xs text-gray-600 dark:text-slate-400 mt-1 line-clamp-1">{piip.nombre_proyecto}</CardDescription>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 uppercase">Estado General</span>
+                                                        <SemaforoCell estado={piip.estado || 'gris'} showText className="h-7" />
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+                                        </Card>
+                                    ))}
+
+                                    {/* 3. Instrument Cards */}
+                                    {instsParaGrupo.map((inst) => {
                                         const periods = getPeriodsForFrecuencia(inst.frecuencia)
-                                        const cumplidos = periods.filter(p => getSeguimientoPara(dep.id, inst.id, p)?.estado_semaforo === 'verde').length
+                                        // Count cumplimiento across all deps in group for this instrument
                                         const total = periods.length
+                                        // For simplicity, if ANY dep in group has it verde, we count it? 
+                                        // No, standard instruments should probably be linked to the MAIN process ID.
+                                        // But if they are spread, we sum.
+                                        const getStatus = (p: string) => {
+                                            for (const dep of groupDeps) {
+                                                const s = getSeguimientoPara(dep.id, inst.id, p)
+                                                if (s) return s.estado_semaforo
+                                            }
+                                            return 'gris'
+                                        }
+
+                                        const cumplidos = periods.filter(p => getStatus(p) === 'verde').length
                                         const pct = total > 0 ? Math.round((cumplidos / total) * 100) : 0
 
                                         return (
-                                            <Card key={`${dep.id}-${inst.id}`} className="card-glass border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
+                                            <Card key={`${groupName}-${inst.id}`} className="card-glass border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
                                                 <CardHeader className="pb-3">
                                                     <div className="flex items-start justify-between gap-4">
                                                         <div>
@@ -226,7 +265,6 @@ export default function MisInstrumentosPage() {
                                                             <span className="text-xs text-gray-500 dark:text-slate-400">{cumplidos}/{total}</span>
                                                         </div>
                                                     </div>
-                                                    {/* Progress bar */}
                                                     <div className="w-full h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
                                                         <div
                                                             className={cn('h-full rounded-full transition-all duration-500',
@@ -239,12 +277,14 @@ export default function MisInstrumentosPage() {
                                                 <CardContent>
                                                     <div className="flex flex-wrap gap-3">
                                                         {periods.map((period) => {
-                                                            const seg = getSeguimientoPara(dep.id, inst.id, period)
-                                                            const estado = seg?.estado_semaforo ?? 'gris'
+                                                            const estado = getStatus(period)
                                                             return (
                                                                 <button
                                                                     key={period}
-                                                                    onClick={() => handleClick(dep, inst, period)}
+                                                                    onClick={() => {
+                                                                        // Pick first dep for click (usually there's only one main process)
+                                                                        handleClick(groupDeps[0], inst, period)
+                                                                    }}
                                                                     className={cn(
                                                                         'flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg border transition-all duration-200',
                                                                         'hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:border-gray-300 dark:hover:border-slate-600 hover:scale-105',
