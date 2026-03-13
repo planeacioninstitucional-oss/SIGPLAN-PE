@@ -198,17 +198,17 @@ export function SeguimientoDialog({
             <DialogContent className="max-w-4xl w-full max-h-[92vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700">
                 <DialogHeader>
                     <DialogTitle>Reporte de Seguimiento</DialogTitle>
-                    <div className="flex flex-col gap-1 text-sm text-slate-400 mt-2">
-                        <p><span className="font-semibold text-slate-200">Dependencia:</span> {dependencia.nombre}</p>
-                        <p><span className="font-semibold text-slate-200">Instrumento:</span> {instrumento.nombre}</p>
-                        <p><span className="font-semibold text-slate-200">Periodo:</span> {periodo}</p>
+                    <div className="flex flex-col gap-1 text-sm text-muted-foreground mt-2">
+                        <p><span className="font-semibold text-foreground">Dependencia:</span> {dependencia.nombre}</p>
+                        <p><span className="font-semibold text-foreground">Instrumento:</span> {instrumento.nombre}</p>
+                        <p><span className="font-semibold text-foreground">Periodo:</span> {periodo}</p>
                     </div>
                 </DialogHeader>
 
                 <div className="grid gap-6 py-4">
                     {/* Oficina Section */}
-                    <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
-                        <h3 className="text-sm font-semibold text-blue-400 uppercase tracking-wider">
+                    <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+                        <h3 className="text-sm font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                             Diligenciamiento Oficina
                         </h3>
 
@@ -310,8 +310,8 @@ export function SeguimientoDialog({
 
                     {/* Planeacion Section */}
                     {(canEditEvaluador || seguimientoExistente?.observacion_planeacion) && (
-                        <div className="space-y-4 p-4 rounded-lg bg-white/5 border border-white/10">
-                            <h3 className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
+                        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+                            <h3 className="text-sm font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
                                 Evaluación Planeación
                             </h3>
 

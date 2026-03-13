@@ -379,13 +379,13 @@ export default function ImportarPage() {
                             </h2>
                             <Button
                                 variant="outline"
-                                className="w-full border-slate-700 hover:bg-blue-500/10 hover:border-blue-500 hover:text-blue-400"
+                                className="w-full border-border hover:bg-blue-500/10 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
                                 onClick={() => downloadTemplate(selectedModule, dependencias.map(d => d.nombre))}
                             >
                                 <Download className="w-4 h-4 mr-2" />
                                 Descargar Plantilla {currentModule.label}
                             </Button>
-                            <p className="text-xs text-slate-500 mt-2">
+                            <p className="text-xs text-muted-foreground mt-2">
                                 La plantilla incluye las columnas correctas y una hoja de referencia con las dependencias válidas.
                             </p>
                         </div>
@@ -403,7 +403,7 @@ export default function ImportarPage() {
                             className={`relative border-2 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center min-h-[320px] cursor-pointer
                                 ${isDragging
                                     ? 'border-blue-500 bg-blue-500/10'
-                                    : 'border-slate-700 bg-slate-900/30 hover:border-slate-600 hover:bg-slate-800/30'
+                                    : 'border-border bg-muted/30 hover:border-muted-foreground/50 hover:bg-muted/50'
                                 }`}
                         >
                             <label className="cursor-pointer flex flex-col items-center gap-4 p-8 w-full h-full absolute inset-0 justify-center">
@@ -414,8 +414,8 @@ export default function ImportarPage() {
                                     onChange={handleFileInput}
                                 />
 
-                                <div className={`h-20 w-20 rounded-full flex items-center justify-center transition-colors ${isDragging ? 'bg-blue-500/30' : 'bg-slate-800'}`}>
-                                    <FileSpreadsheet className={`h-10 w-10 ${isDragging ? 'text-blue-400' : 'text-slate-400'}`} />
+                                <div className={`h-20 w-20 rounded-full flex items-center justify-center transition-colors ${isDragging ? 'bg-blue-500/30' : 'bg-muted'}`}>
+                                    <FileSpreadsheet className={`h-10 w-10 ${isDragging ? 'text-blue-500' : 'text-muted-foreground'}`} />
                                 </div>
 
                                 <div className="text-center">
@@ -439,30 +439,30 @@ export default function ImportarPage() {
             {step === 'preview' && (
                 <div className="space-y-4">
                     {/* Stats Bar */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <Card className="card-glass border-slate-800">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card className="card-glass border-border">
                             <CardContent className="pt-4 flex items-center gap-3">
-                                <FileSpreadsheet className="w-8 h-8 text-slate-400" />
+                                <FileSpreadsheet className="w-8 h-8 text-muted-foreground" />
                                 <div>
                                     <p className="text-2xl font-bold text-foreground">{parsedRows.length}</p>
                                     <p className="text-xs text-muted-foreground">Filas leídas</p>
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className="card-glass border-green-500/30 bg-green-500/5">
+                        <Card className="card-glass border-border">
                             <CardContent className="pt-4 flex items-center gap-3">
-                                <CheckCircle2 className="w-8 h-8 text-green-400" />
+                                <CheckCircle2 className="w-8 h-8 text-green-500" />
                                 <div>
-                                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{validCount}</p>
-                                    <p className="text-xs text-muted-foreground">Válidas para importar</p>
+                                    <p className="text-2xl font-bold text-foreground">{validCount}</p>
+                                    <p className="text-xs text-muted-foreground">Filas válidas</p>
                                 </div>
                             </CardContent>
                         </Card>
-                        <Card className={`card-glass ${errorCount > 0 ? 'border-red-500/30 bg-red-500/5' : 'border-slate-800'}`}>
+                        <Card className="card-glass border-border">
                             <CardContent className="pt-4 flex items-center gap-3">
-                                <XCircle className={`w-8 h-8 ${errorCount > 0 ? 'text-red-400' : 'text-slate-600'}`} />
+                                <XCircle className="w-8 h-8 text-red-500" />
                                 <div>
-                                    <p className={`text-2xl font-bold ${errorCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>{errorCount}</p>
+                                    <p className="text-2xl font-bold text-foreground">{errorCount}</p>
                                     <p className="text-xs text-muted-foreground">Con errores</p>
                                 </div>
                             </CardContent>
@@ -472,7 +472,7 @@ export default function ImportarPage() {
                     {/* File Info */}
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
-                            <FileSpreadsheet className="w-4 h-4 text-slate-400" />
+                            <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />
                             <span className="text-sm text-foreground">{fileName}</span>
                             <Badge variant="outline" className="text-xs border-border text-muted-foreground">
                                 {currentModule.label}
@@ -501,8 +501,8 @@ export default function ImportarPage() {
                     </div>
 
                     {/* Preview Table */}
-                    <Card className="card-glass border-slate-800">
-                        <CardContent className="pt-0 overflow-x-auto max-h-[50vh] overflow-y-auto">
+                    <Card className="card-glass border-border shadow-sm">
+                        <CardContent className="pt-0 overflow-x-auto max-h-[50vh] overflow-y-auto p-0">
                             <table className="w-full text-sm">
                                 <thead className="bg-muted sticky top-0 z-10 border-b border-border">
                                     <tr>
@@ -526,9 +526,9 @@ export default function ImportarPage() {
                                     {displayRows.map((row) => (
                                         <tr
                                             key={row.rowIndex}
-                                            className={`border-t border-slate-800 ${row.valid ? 'hover:bg-slate-800/30' : 'bg-red-500/5 hover:bg-red-500/10'}`}
+                                            className={`border-t border-border ${row.valid ? 'hover:bg-muted/50' : 'bg-red-500/5 hover:bg-red-500/10'}`}
                                         >
-                                            <td className="p-3 text-muted-foreground text-xs">{row.rowIndex}</td>
+                                            <td className="p-3 text-muted-foreground text-xs font-mono">{row.rowIndex}</td>
                                             <td className="p-3">
                                                 {row.valid
                                                     ? <CheckCircle2 className="w-4 h-4 text-green-400" />
@@ -553,11 +553,11 @@ export default function ImportarPage() {
                                             </td>
                                             <td className="p-3 max-w-[250px]">
                                                 {row.errors.length === 0
-                                                    ? <span className="text-green-500 text-xs">✓ OK</span>
+                                                    ? <span className="text-green-600 dark:text-green-500 text-xs font-medium">✓ OK</span>
                                                     : (
                                                         <ul className="space-y-0.5">
                                                             {row.errors.map((e, i) => (
-                                                                <li key={i} className="text-red-400 text-xs flex items-start gap-1">
+                                                                <li key={i} className="text-red-600 dark:text-red-400 text-xs flex items-start gap-1">
                                                                     <span className="shrink-0 mt-0.5">•</span>
                                                                     {e}
                                                                 </li>
@@ -583,8 +583,8 @@ export default function ImportarPage() {
                         </div>
                     </div>
                     <div className="text-center">
-                        <p className="text-xl font-semibold text-white">Importando datos...</p>
-                        <p className="text-slate-400 text-sm mt-1">Cargando {validCount} registros en la base de datos</p>
+                        <p className="text-xl font-semibold text-foreground">Importando datos...</p>
+                        <p className="text-muted-foreground text-sm mt-1">Cargando {validCount} registros en la base de datos</p>
                     </div>
                 </div>
             )}
@@ -600,25 +600,25 @@ export default function ImportarPage() {
                     </div>
 
                     <div className="text-center">
-                        <p className="text-2xl font-bold text-white mb-2">
+                        <p className="text-2xl font-bold text-foreground mb-2">
                             {importResult.failed === 0 ? '¡Importación Exitosa!' : 'Importación Parcial'}
                         </p>
                         <div className="flex items-center gap-6 justify-center mt-4">
                             <div className="text-center">
-                                <p className="text-3xl font-bold text-green-400">{importResult.success}</p>
-                                <p className="text-slate-400 text-sm">Importados</p>
+                                <p className="text-3xl font-bold text-green-600 dark:text-green-400">{importResult.success}</p>
+                                <p className="text-muted-foreground text-sm">Importados</p>
                             </div>
                             {importResult.failed > 0 && (
                                 <div className="text-center">
-                                    <p className="text-3xl font-bold text-red-400">{importResult.failed}</p>
-                                    <p className="text-slate-400 text-sm">Fallidos</p>
+                                    <p className="text-3xl font-bold text-red-600 dark:text-red-400">{importResult.failed}</p>
+                                    <p className="text-muted-foreground text-sm">Fallidos</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Button onClick={handleReset} variant="outline" className="border-slate-700">
+                        <Button onClick={handleReset} variant="outline" className="border-border">
                             <RotateCcw className="w-4 h-4 mr-2" />
                             Importar otro archivo
                         </Button>

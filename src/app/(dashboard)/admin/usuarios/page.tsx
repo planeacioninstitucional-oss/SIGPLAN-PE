@@ -14,11 +14,11 @@ import type { Perfil, Oficina, ROL_LABELS } from '@/types/database'
 import { UserDialog } from '@/components/admin/UserDialog'
 
 const ROL_BADGE_COLOR: Record<string, string> = {
-    super_admin: 'bg-red-500/20 text-red-300 border-red-500/30',
-    equipo_planeacion: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    jefe_oficina: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    gerente: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    auditor: 'bg-green-500/20 text-green-300 border-green-500/30',
+    super_admin: 'bg-red-500/10 text-red-600 dark:text-red-300 border-red-500/20',
+    equipo_planeacion: 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/20',
+    jefe_oficina: 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/20',
+    gerente: 'bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/20',
+    auditor: 'bg-green-500/10 text-green-600 dark:text-green-300 border-green-500/20',
 }
 
 const ROL_LABELS_ES: Record<string, string> = {
@@ -98,11 +98,13 @@ export default function AdminUsuariosPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        <UserCog className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+                <div>
+                    <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                        <UserCog className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                         Gestión de Usuarios
                     </h1>
-                    <p className="text-gray-500 dark:text-slate-400 mt-1">Administra perfiles, roles y asignación de oficinas</p>
+                    <p className="text-muted-foreground mt-1">Administra perfiles, roles y asignación de oficinas</p>
+                </div>
                 </div>
                 <div className="flex gap-2">
                     <Button
@@ -121,7 +123,7 @@ export default function AdminUsuariosPage() {
                         size="sm"
                         onClick={fetchData}
                         disabled={loading}
-                        className="border-slate-700 hover:border-slate-600"
+                        className="border-border hover:bg-muted"
                     >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                         <span className="ml-2 hidden sm:inline">Actualizar</span>
@@ -137,18 +139,18 @@ export default function AdminUsuariosPage() {
                     { label: 'Inactivos', value: inactivos, icon: Users, color: 'text-red-400' },
                     { label: 'Oficinas', value: oficinas.length, icon: Building2, color: 'text-purple-400' },
                 ].map(stat => (
-                    <div key={stat.label} className="p-4 rounded-xl border border-gray-200 dark:border-white/5 bg-white dark:bg-white/[0.02]">
+                    <div key={stat.label} className="p-4 rounded-xl border border-border bg-card shadow-sm">
                         <stat.icon className={`w-5 h-5 mb-2 ${stat.color}`} />
                         <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                        <p className="text-xs text-gray-500 dark:text-slate-500">{stat.label}</p>
+                        <p className="text-xs text-muted-foreground">{stat.label}</p>
                     </div>
                 ))}
             </div>
 
-            <Card className="card-glass border-gray-200 dark:border-slate-800">
+            <Card className="card-glass border-border">
                 <CardHeader>
-                    <CardTitle className="text-gray-900 dark:text-slate-200">Usuarios Registrados</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-foreground">Usuarios Registrados</CardTitle>
+                    <CardDescription className="text-muted-foreground">
                         Haz clic en <strong>Editar</strong> para cambiar rol, oficina o estado de un usuario
                     </CardDescription>
                 </CardHeader>
@@ -160,14 +162,14 @@ export default function AdminUsuariosPage() {
                     ) : (
                         <div className="relative overflow-x-auto">
                             <Table>
-                                <TableHeader className="bg-gray-50 dark:bg-slate-900/90">
-                                    <TableRow>
-                                        <TableHead className="text-gray-700 dark:text-slate-300">Usuario</TableHead>
-                                        <TableHead className="text-gray-700 dark:text-slate-300">Cargo</TableHead>
-                                        <TableHead className="text-gray-700 dark:text-slate-300">Rol</TableHead>
-                                        <TableHead className="text-gray-700 dark:text-slate-300">Oficina</TableHead>
-                                        <TableHead className="text-center text-gray-700 dark:text-slate-300">Estado</TableHead>
-                                        <TableHead className="text-right text-gray-700 dark:text-slate-300">Acciones</TableHead>
+                                <TableHeader className="bg-muted/50 dark:bg-muted/20">
+                                    <TableRow className="border-border">
+                                        <TableHead className="text-foreground font-bold font-semibold uppercase text-[11px] tracking-wider">Usuario</TableHead>
+                                        <TableHead className="text-foreground font-bold font-semibold uppercase text-[11px] tracking-wider">Cargo</TableHead>
+                                        <TableHead className="text-foreground font-bold font-semibold uppercase text-[11px] tracking-wider">Rol</TableHead>
+                                        <TableHead className="text-foreground font-bold font-semibold uppercase text-[11px] tracking-wider">Oficina</TableHead>
+                                        <TableHead className="text-center text-foreground font-bold font-semibold uppercase text-[11px] tracking-wider">Estado</TableHead>
+                                        <TableHead className="text-right text-foreground font-bold font-semibold uppercase text-[11px] tracking-wider">Acciones</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>

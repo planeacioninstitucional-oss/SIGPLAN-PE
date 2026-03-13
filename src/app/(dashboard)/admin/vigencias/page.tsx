@@ -54,8 +54,8 @@ export default function AdminVigenciasPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Vigencias</h1>
-                    <p className="text-slate-400">Gestión de periodos anuales</p>
+                    <h1 className="text-3xl font-bold text-foreground">Vigencias</h1>
+                    <p className="text-muted-foreground">Gestión de periodos anuales</p>
                 </div>
                 <Button onClick={() => handleEdit(null)} className="bg-blue-600 hover:bg-blue-500">
                     <Plus className="w-4 h-4 mr-2" />
@@ -63,28 +63,28 @@ export default function AdminVigenciasPage() {
                 </Button>
             </div>
 
-            <Card className="card-glass border-slate-800">
+            <Card className="card-glass border-border bg-card">
                 <CardHeader>
-                    <CardTitle className="text-slate-200">Vigencias Registradas</CardTitle>
+                    <CardTitle className="text-foreground">Vigencias Registradas</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="relative overflow-x-auto">
                         <Table>
-                            <TableHeader className="bg-slate-900/90">
-                                <TableRow>
-                                    <TableHead className="text-slate-300">Año</TableHead>
-                                    <TableHead className="text-slate-300">Descripción</TableHead>
-                                    <TableHead className="text-center text-slate-300">Estado</TableHead>
-                                    <TableHead className="text-right text-slate-300">Acciones</TableHead>
+                            <TableHeader className="bg-muted/80">
+                                <TableRow className="border-border">
+                                    <TableHead className="text-muted-foreground font-bold">Año</TableHead>
+                                    <TableHead className="text-muted-foreground font-bold">Descripción</TableHead>
+                                    <TableHead className="text-center text-muted-foreground font-bold">Estado</TableHead>
+                                    <TableHead className="text-right text-muted-foreground font-bold">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {vigencias.map((v) => (
-                                    <TableRow key={v.id} className="hover:bg-slate-800/50">
-                                        <TableCell className="font-bold text-lg text-slate-200">
+                                    <TableRow key={v.id} className="hover:bg-muted/50 border-border">
+                                        <TableCell className="font-bold text-lg text-foreground">
                                             {v.anio}
                                         </TableCell>
-                                        <TableCell className="text-slate-300">
+                                        <TableCell className="text-foreground">
                                             {v.descripcion}
                                         </TableCell>
                                         <TableCell className="text-center">

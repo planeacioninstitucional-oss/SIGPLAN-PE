@@ -84,24 +84,24 @@ export function UserDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-200 border-gray-200 dark:border-slate-700">
+            <DialogContent className="max-w-md bg-background text-foreground border-border shadow-lg">
                 <DialogHeader>
-                    <DialogTitle className="text-gray-900 dark:text-white">Editar Usuario</DialogTitle>
-                    <p className="text-sm text-gray-500 dark:text-slate-400">{userToEdit?.email}</p>
+                    <DialogTitle className="text-foreground">Editar Usuario</DialogTitle>
+                    <p className="text-sm text-muted-foreground">{userToEdit?.email}</p>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
                     {/* Rol */}
                     <div className="grid gap-2">
-                        <Label className="text-gray-700 dark:text-slate-300">Rol en la plataforma</Label>
+                        <Label className="text-foreground font-medium">Rol en la plataforma</Label>
                         <Select
                             value={formData.rol}
                             onValueChange={val => setFormData({ ...formData, rol: val as RolUsuario })}
                         >
-                            <SelectTrigger className="bg-gray-50 dark:bg-slate-800 border-gray-300 dark:border-slate-700 text-gray-900 dark:text-slate-200">
+                            <SelectTrigger className="bg-muted/50 border-border text-foreground">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200">
+                            <SelectContent className="bg-popover border-border text-popover-foreground">
                                 {ROL_LIST.map(r => (
                                     <SelectItem key={r.value} value={r.value} className="focus:bg-blue-50 dark:focus:bg-slate-700 focus:text-blue-900 dark:focus:text-white cursor-pointer">{r.label}</SelectItem>
                                 ))}
@@ -111,15 +111,15 @@ export function UserDialog({
 
                     {/* Oficina */}
                     <div className="grid gap-2">
-                        <Label className="text-gray-700 dark:text-slate-300">Oficina / Dependencia</Label>
+                        <Label className="text-foreground font-medium">Oficina / Dependencia</Label>
                         <Select
                             value={formData.oficina_id || 'none'}
                             onValueChange={val => setFormData({ ...formData, oficina_id: val === 'none' ? null : val })}
                         >
-                            <SelectTrigger className="bg-gray-50 dark:bg-slate-800 border-gray-300 dark:border-slate-700 text-gray-900 dark:text-slate-200">
+                            <SelectTrigger className="bg-muted/50 border-border text-foreground">
                                 <SelectValue placeholder="Seleccione oficina..." />
                             </SelectTrigger>
-                            <SelectContent className="bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-900 dark:text-slate-200 max-h-60 overflow-y-auto">
+                            <SelectContent className="bg-popover border-border text-popover-foreground max-h-60 overflow-y-auto">
                                 <SelectItem value="none" className="focus:bg-blue-50 dark:focus:bg-slate-700 focus:text-blue-900 dark:focus:text-white cursor-pointer">-- Sin oficina --</SelectItem>
                                 {oficinas.map(o => (
                                     <SelectItem key={o.id} value={o.id} className="focus:bg-blue-50 dark:focus:bg-slate-700 focus:text-blue-900 dark:focus:text-white cursor-pointer">{o.nombre}</SelectItem>
@@ -140,8 +140,8 @@ export function UserDialog({
                     </div>
                 </div>
 
-                <DialogFooter className="mt-6 border-t border-gray-100 dark:border-slate-800 pt-4">
-                    <Button variant="outline" onClick={() => onOpenChange(false)} className="bg-transparent border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white">Cancelar</Button>
+                <DialogFooter className="mt-6 border-t border-border pt-4">
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="bg-transparent border-border text-muted-foreground hover:bg-muted hover:text-foreground">Cancelar</Button>
                     <Button onClick={handleSubmit} disabled={loading} className="bg-blue-600 text-white hover:bg-blue-500">
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Guardar cambios

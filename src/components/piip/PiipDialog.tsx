@@ -183,14 +183,14 @@ export function PiipDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto bg-slate-900/95 backdrop-blur-xl border border-white/10 shadow-2xl p-0">
+            <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto bg-background/95 backdrop-blur-xl border border-border shadow-2xl p-0">
                 <div className="bg-gradient-to-r from-blue-600/20 to-transparent p-6 pb-0">
                     <DialogHeader className="mb-4">
-                        <DialogTitle className="text-2xl font-bold text-white flex items-center gap-2">
+                        <DialogTitle className="text-2xl font-bold text-foreground flex items-center gap-2">
                             <Layout className="w-6 h-6 text-blue-400" />
                             {projectToEdit ? 'Editar Proyecto PIIP' : 'Nuevo Proyecto PIIP'}
                         </DialogTitle>
-                        <p className="text-slate-400 text-sm">Ingrese los detalles del proyecto de inversión pública.</p>
+                        <p className="text-muted-foreground text-sm">Ingrese los detalles del proyecto de inversión pública.</p>
                     </DialogHeader>
                 </div>
 
@@ -204,25 +204,25 @@ export function PiipDialog({
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <Label htmlFor="codigo" className="text-slate-200 font-medium ml-1">Código BPIN</Label>
+                                <Label htmlFor="codigo" className="text-foreground font-medium ml-1">Código BPIN</Label>
                                 <Input
                                     id="codigo"
                                     value={formData.codigo_proyecto}
                                     onChange={(e) => setFormData({ ...formData, codigo_proyecto: e.target.value })}
                                     placeholder="Ej. 2024-XXXX"
-                                    className="bg-slate-800/50 border-slate-700/50 focus:border-blue-500/50 focus:ring-blue-500/20 text-white placeholder:text-slate-500"
+                                    className="bg-muted/50 border-border focus:border-blue-500/50 focus:ring-blue-500/20 text-foreground placeholder:text-muted-foreground"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="estado" className="text-slate-200 font-medium ml-1">Estado Cumplimiento</Label>
+                                <Label htmlFor="estado" className="text-foreground font-medium ml-1">Estado Cumplimiento</Label>
                                 <Select
                                     value={formData.estado}
                                     onValueChange={(val) => setFormData({ ...formData, estado: val })}
                                 >
-                                    <SelectTrigger className="bg-slate-800/50 border-slate-700/50 text-white">
+                                    <SelectTrigger className="bg-muted/50 border-border text-foreground">
                                         <SelectValue />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                    <SelectContent className="bg-popover border-border text-popover-foreground">
                                         <SelectItem value="verde" className="focus:bg-green-500/20"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500" /> Verde (Cumplido)</span></SelectItem>
                                         <SelectItem value="amarillo" className="focus:bg-yellow-500/20"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-yellow-500" /> Amarillo (Alerta)</span></SelectItem>
                                         <SelectItem value="rojo" className="focus:bg-red-500/20"><span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500" /> Rojo (Crítico)</span></SelectItem>
@@ -234,15 +234,15 @@ export function PiipDialog({
 
                         {isAdmin && (
                             <div className="space-y-2">
-                                <Label className="text-slate-200 font-medium ml-1">Proceso Asignado</Label>
+                                <Label className="text-foreground font-medium ml-1">Proceso Asignado</Label>
                                 <select
-                                    className="flex h-10 w-full rounded-md border border-slate-700/50 bg-slate-800/50 px-3 py-2 text-sm shadow-sm transition-all focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/10 text-white"
+                                    className="flex h-9 w-full rounded-md border border-border bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
                                     value={formData.dependencia_id}
                                     onChange={e => setFormData({ ...formData, dependencia_id: e.target.value })}
                                 >
-                                    <option value="" disabled className="bg-slate-900">Seleccione un proceso...</option>
+                                    <option value="" disabled>Seleccione un proceso...</option>
                                     {todasDependencias.map(d => (
-                                        <option key={d.id} value={d.id} className="bg-slate-900">{d.nombre}</option>
+                                        <option key={d.id} value={d.id} className="bg-popover">{d.nombre}</option>
                                     ))}
                                 </select>
                             </div>
@@ -258,7 +258,7 @@ export function PiipDialog({
 
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="nombre" className="text-slate-200 font-medium ml-1 flex items-center gap-2">
+                                <Label htmlFor="nombre" className="text-foreground font-medium ml-1 flex items-center gap-2">
                                     Meta Plan de Desarrollo <span className="text-red-500 text-xs">*</span>
                                 </Label>
                                 <Input
@@ -266,18 +266,18 @@ export function PiipDialog({
                                     value={formData.nombre_proyecto}
                                     onChange={(e) => setFormData({ ...formData, nombre_proyecto: e.target.value })}
                                     placeholder="Nombre completo basado en el PDD"
-                                    className="bg-slate-800/50 border-slate-700/50 text-white placeholder:text-slate-600 font-medium"
+                                    className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground/60 font-medium"
                                 />
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="objetivo" className="text-slate-200 font-medium ml-1">Objetivo General</Label>
+                                <Label htmlFor="objetivo" className="text-foreground font-medium ml-1">Objetivo General</Label>
                                 <Textarea
                                     id="objetivo"
                                     value={formData.objetivo}
                                     onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })}
                                     placeholder="Escriba el objetivo principal del proyecto..."
-                                    className="bg-slate-800/50 border-slate-700/50 text-white placeholder:text-slate-600 min-h-[100px] resize-none"
+                                    className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground/60 min-h-[100px] resize-none"
                                 />
                             </div>
                         </div>
@@ -294,23 +294,23 @@ export function PiipDialog({
                                 </div>
                                 <div className="grid gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="meta_cuatrienio" className="text-slate-300 text-xs">Meta Cuatrienio</Label>
+                                        <Label htmlFor="meta_cuatrienio" className="text-muted-foreground text-xs">Meta Cuatrienio</Label>
                                         <Input
                                             id="meta_cuatrienio"
                                             type="number"
                                             value={formData.meta_cuatrienio}
                                             onChange={(e) => setFormData({ ...formData, meta_cuatrienio: e.target.value })}
-                                            className="bg-slate-800/30 border-slate-700/50 text-white"
+                                            className="bg-muted/30 border-border text-foreground"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="meta_anual" className="text-slate-300 text-xs">Meta de Vigencia</Label>
+                                        <Label htmlFor="meta_anual" className="text-muted-foreground text-xs">Meta de Vigencia</Label>
                                         <Input
                                             id="meta_anual"
                                             type="number"
                                             value={formData.meta_anual}
                                             onChange={(e) => setFormData({ ...formData, meta_anual: e.target.value })}
-                                            className="bg-emerald-500/10 border-emerald-500/20 text-emerald-400 font-bold focus:border-emerald-500/50 focus:ring-emerald-500/10"
+                                            className="bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold focus:border-emerald-500/50 focus:ring-emerald-500/10"
                                         />
                                     </div>
                                 </div>
@@ -324,28 +324,28 @@ export function PiipDialog({
                                 </div>
                                 <div className="grid gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="presupuesto_asignado" className="text-slate-300 text-xs">Costos (Asignado)</Label>
+                                        <Label htmlFor="presupuesto_asignado" className="text-muted-foreground text-xs">Costos (Asignado)</Label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">$</span>
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                                             <Input
                                                 id="presupuesto_asignado"
                                                 type="number"
                                                 value={formData.presupuesto_asignado}
                                                 onChange={(e) => setFormData({ ...formData, presupuesto_asignado: e.target.value })}
-                                                className="bg-slate-800/30 border-slate-700/50 pl-7 text-white"
+                                                className="bg-muted/30 border-border pl-7 text-foreground"
                                             />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="presupuesto_ejecutado" className="text-slate-300 text-xs">Ejecutado (Monto)</Label>
+                                        <Label htmlFor="presupuesto_ejecutado" className="text-muted-foreground text-xs">Ejecutado (Monto)</Label>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">$</span>
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
                                             <Input
                                                 id="presupuesto_ejecutado"
                                                 type="number"
                                                 value={formData.presupuesto_ejecutado}
                                                 onChange={(e) => setFormData({ ...formData, presupuesto_ejecutado: e.target.value })}
-                                                className="bg-amber-500/10 border-amber-500/20 pl-7 text-amber-400 font-bold focus:border-amber-500/50 focus:ring-amber-500/10"
+                                                className="bg-amber-500/10 border-amber-500/20 pl-7 text-amber-600 dark:text-amber-400 font-bold focus:border-amber-500/50 focus:ring-amber-500/10"
                                             />
                                         </div>
                                     </div>
@@ -362,15 +362,15 @@ export function PiipDialog({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="url" className="text-slate-200 font-medium ml-1">URL Google Drive / Secop</Label>
+                            <Label htmlFor="url" className="text-foreground font-medium ml-1">URL Google Drive / Secop</Label>
                             <Input
                                 id="url"
                                 value={formData.url_soporte}
                                 onChange={e => setFormData({ ...formData, url_soporte: e.target.value })}
                                 placeholder="https://drive.google.com/..."
-                                className="bg-slate-800/50 border-slate-700/50 text-blue-400 underline-offset-4 focus:no-underline"
+                                className="bg-muted/50 border-border text-blue-600 dark:text-blue-400 underline-offset-4 focus:no-underline"
                             />
-                            <p className="text-[10px] text-slate-500 ml-1">Asegúrese de que el enlace sea público para el equipo de Planeación.</p>
+                            <p className="text-[10px] text-muted-foreground ml-1">Asegúrese de que el enlace sea público para el equipo de Planeación.</p>
                         </div>
                     </div>
                 </div>
