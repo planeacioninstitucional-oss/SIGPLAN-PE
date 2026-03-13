@@ -25,7 +25,7 @@ export function SemaforoCell({ estado, showText = false, className, onClick }: S
     const content = (
         <Badge
             variant={estado}
-            className={`h-6 ${showText ? 'w-auto px-3' : 'w-6 p-0 flex items-center justify-center rounded-full'} ${glowClass} ${hoverClass} ${className}`}
+            className={`h-8 ${showText ? 'w-auto px-4 py-1 text-sm' : 'w-8 p-0 flex items-center justify-center rounded-full'} ${glowClass} ${hoverClass} hover:scale-110 transition-all ${className}`}
             onClick={onClick}
         >
             {showText ? labels[estado] : null}

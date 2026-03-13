@@ -231,11 +231,16 @@ export default function SeguimientosPage() {
             {/* Stats Row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {SEMAFORO_STATS_CONFIG.map(({ key, label, icon: Icon, color }) => (
-                    <Card key={key} className="card-glass border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/40">
+                    <Card key={key} className="card-glass border-border bg-card">
                         <CardContent className="p-4 flex items-center gap-3">
-                            <Icon className={cn('w-8 h-8', color)} />
+                            <Icon className={cn('w-8 h-8 opacity-90', 
+                                key === 'verde' ? 'text-green-600 dark:text-green-400' :
+                                key === 'amarillo' ? 'text-yellow-600 dark:text-yellow-400' :
+                                key === 'rojo' ? 'text-red-600 dark:text-red-400' :
+                                'text-muted-foreground'
+                            )} />
                             <div>
-                                <p className="text-2xl font-bold text-foreground dark:text-white">{stats[key]}</p>
+                                <p className="text-2xl font-bold text-foreground">{stats[key]}</p>
                                 <p className="text-xs text-muted-foreground">{label}</p>
                             </div>
                         </CardContent>
@@ -304,9 +309,9 @@ export default function SeguimientosPage() {
                         )}
 
                         <Table wrapperClassName="max-h-[calc(100vh-320px)] scrollbar-thin scrollbar-thumb-slate-700">
-                            <TableHeader className="sticky top-0 z-10 bg-gray-50/95 dark:bg-slate-900/95 backdrop-blur-sm">
+                            <TableHeader className="sticky top-0 z-10 bg-muted/95 dark:bg-slate-900/95 backdrop-blur-sm">
                                 <TableRow className="border-border dark:border-slate-800 hover:bg-transparent">
-                                    <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-gray-50/95 dark:bg-slate-900/95 z-20 border-r border-border dark:border-slate-800 text-foreground dark:text-slate-300 font-bold py-4 pl-5">
+                                    <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-muted/95 dark:bg-slate-900/95 z-20 border-r border-border dark:border-slate-800 text-foreground dark:text-slate-300 font-bold py-4 pl-5">
                                         Dependencia / Oficina
                                     </TableHead>
                                     {periods.map((period) => (

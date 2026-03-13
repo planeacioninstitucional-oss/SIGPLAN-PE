@@ -322,11 +322,11 @@ export default function ImportarPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Importador Masivo</h1>
-                    <p className="text-slate-400">Carga datos desde Excel para {vigenciaActual ? `Vigencia ${vigenciaActual.anio}` : 'la vigencia seleccionada'}</p>
+                    <h1 className="text-3xl font-bold text-foreground">Importador Masivo</h1>
+                    <p className="text-muted-foreground">Carga datos desde Excel para {vigenciaActual ? `Vigencia ${vigenciaActual.anio}` : 'la vigencia seleccionada'}</p>
                 </div>
                 {step !== 'upload' && (
-                    <Button variant="outline" onClick={handleReset} className="border-slate-700">
+                    <Button variant="outline" onClick={handleReset} className="border-border">
                         <RotateCcw className="w-4 h-4 mr-2" />
                         Nueva Importación
                     </Button>
@@ -338,7 +338,7 @@ export default function ImportarPage() {
                 <Card className="border-yellow-500/30 bg-yellow-500/5">
                     <CardContent className="flex items-center gap-3 pt-4">
                         <AlertCircle className="w-5 h-5 text-yellow-400 shrink-0" />
-                        <p className="text-yellow-300 text-sm">
+                        <p className="text-yellow-600 dark:text-yellow-300 text-sm">
                             Selecciona una vigencia en la barra superior antes de importar datos.
                         </p>
                     </CardContent>
@@ -350,7 +350,7 @@ export default function ImportarPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Module Selector */}
                     <div className="lg:col-span-1 space-y-3">
-                        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+                        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                             1. Selecciona el módulo
                         </h2>
                         {MODULES.map(mod => (
@@ -359,13 +359,13 @@ export default function ImportarPage() {
                                 onClick={() => setSelectedModule(mod.id)}
                                 className={`w-full text-left p-4 rounded-xl border transition-all ${selectedModule === mod.id
                                     ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50'
-                                    : 'border-slate-800 bg-slate-900/50 hover:border-slate-700 hover:bg-slate-800/50'
+                                    : 'border-border bg-card hover:border-blue-500/50 hover:bg-muted/50'
                                     }`}
                             >
                                 <div className={`inline-flex px-2 py-0.5 rounded text-xs font-bold mb-2 border ${mod.color}`}>
                                     {mod.label}
                                 </div>
-                                <p className="text-xs text-slate-400">{mod.description}</p>
+                                <p className="text-xs text-muted-foreground">{mod.description}</p>
                                 {selectedModule === mod.id && (
                                     <ChevronRight className="w-4 h-4 text-blue-400 mt-1" />
                                 )}
@@ -374,7 +374,7 @@ export default function ImportarPage() {
 
                         {/* Download Template */}
                         <div className="pt-2">
-                            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                                 2. Descarga la plantilla
                             </h2>
                             <Button
@@ -393,7 +393,7 @@ export default function ImportarPage() {
 
                     {/* Drop Zone */}
                     <div className="lg:col-span-2">
-                        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                             3. Sube tu archivo
                         </h2>
                         <div
@@ -419,11 +419,11 @@ export default function ImportarPage() {
                                 </div>
 
                                 <div className="text-center">
-                                    <p className="text-slate-200 font-semibold text-lg">
+                                    <p className="text-foreground font-semibold text-lg">
                                         {isDragging ? 'Suelta el archivo aquí' : 'Arrastra tu Excel aquí'}
                                     </p>
-                                    <p className="text-slate-500 text-sm mt-1">o haz clic para seleccionar</p>
-                                    <p className="text-slate-600 text-xs mt-3">Soporta .xlsx, .xls y .csv</p>
+                                    <p className="text-muted-foreground text-sm mt-1">o haz clic para seleccionar</p>
+                                    <p className="text-muted-foreground/60 text-xs mt-3">Soporta .xlsx, .xls y .csv</p>
                                 </div>
 
                                 <div className={`mt-2 px-2 py-1 rounded-full text-xs border ${currentModule.color}`}>
@@ -444,8 +444,8 @@ export default function ImportarPage() {
                             <CardContent className="pt-4 flex items-center gap-3">
                                 <FileSpreadsheet className="w-8 h-8 text-slate-400" />
                                 <div>
-                                    <p className="text-2xl font-bold text-white">{parsedRows.length}</p>
-                                    <p className="text-xs text-slate-400">Filas leídas</p>
+                                    <p className="text-2xl font-bold text-foreground">{parsedRows.length}</p>
+                                    <p className="text-xs text-muted-foreground">Filas leídas</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -453,8 +453,8 @@ export default function ImportarPage() {
                             <CardContent className="pt-4 flex items-center gap-3">
                                 <CheckCircle2 className="w-8 h-8 text-green-400" />
                                 <div>
-                                    <p className="text-2xl font-bold text-green-400">{validCount}</p>
-                                    <p className="text-xs text-slate-400">Válidas para importar</p>
+                                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{validCount}</p>
+                                    <p className="text-xs text-muted-foreground">Válidas para importar</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -462,8 +462,8 @@ export default function ImportarPage() {
                             <CardContent className="pt-4 flex items-center gap-3">
                                 <XCircle className={`w-8 h-8 ${errorCount > 0 ? 'text-red-400' : 'text-slate-600'}`} />
                                 <div>
-                                    <p className={`text-2xl font-bold ${errorCount > 0 ? 'text-red-400' : 'text-slate-400'}`}>{errorCount}</p>
-                                    <p className="text-xs text-slate-400">Con errores</p>
+                                    <p className={`text-2xl font-bold ${errorCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>{errorCount}</p>
+                                    <p className="text-xs text-muted-foreground">Con errores</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -473,8 +473,8 @@ export default function ImportarPage() {
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
                             <FileSpreadsheet className="w-4 h-4 text-slate-400" />
-                            <span className="text-sm text-slate-300">{fileName}</span>
-                            <Badge variant="outline" className="text-xs border-slate-700 text-slate-400">
+                            <span className="text-sm text-foreground">{fileName}</span>
+                            <Badge variant="outline" className="text-xs border-border text-muted-foreground">
                                 {currentModule.label}
                             </Badge>
                         </div>
@@ -504,22 +504,22 @@ export default function ImportarPage() {
                     <Card className="card-glass border-slate-800">
                         <CardContent className="pt-0 overflow-x-auto max-h-[50vh] overflow-y-auto">
                             <table className="w-full text-sm">
-                                <thead className="bg-slate-900/90 sticky top-0 z-10">
+                                <thead className="bg-muted sticky top-0 z-10 border-b border-border">
                                     <tr>
-                                        <th className="text-left p-3 text-slate-400 font-semibold">Fila</th>
-                                        <th className="text-left p-3 text-slate-400 font-semibold">Estado</th>
-                                        <th className="text-left p-3 text-slate-400 font-semibold">Dependencia</th>
-                                        <th className="text-left p-3 text-slate-400 font-semibold">
+                                        <th className="text-left p-3 text-muted-foreground font-semibold">Fila</th>
+                                        <th className="text-left p-3 text-muted-foreground font-semibold">Estado</th>
+                                        <th className="text-left p-3 text-muted-foreground font-semibold">Dependencia</th>
+                                        <th className="text-left p-3 text-muted-foreground font-semibold">
                                             {selectedModule === 'piip' ? 'Nombre Proyecto'
                                                 : selectedModule === 'pam' ? 'Meta PDD'
                                                     : 'Descripción'}
                                         </th>
-                                        <th className="text-left p-3 text-slate-400 font-semibold">
+                                        <th className="text-left p-3 text-muted-foreground font-semibold">
                                             {selectedModule === 'piip' ? 'Presupuesto Asignado'
                                                 : selectedModule === 'pam' ? 'Eje Estratégico'
                                                     : 'Código Meta'}
                                         </th>
-                                        <th className="text-left p-3 text-slate-400 font-semibold">Errores</th>
+                                        <th className="text-left p-3 text-muted-foreground font-semibold">Errores</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -528,22 +528,22 @@ export default function ImportarPage() {
                                             key={row.rowIndex}
                                             className={`border-t border-slate-800 ${row.valid ? 'hover:bg-slate-800/30' : 'bg-red-500/5 hover:bg-red-500/10'}`}
                                         >
-                                            <td className="p-3 text-slate-500 text-xs">{row.rowIndex}</td>
+                                            <td className="p-3 text-muted-foreground text-xs">{row.rowIndex}</td>
                                             <td className="p-3">
                                                 {row.valid
                                                     ? <CheckCircle2 className="w-4 h-4 text-green-400" />
                                                     : <XCircle className="w-4 h-4 text-red-400" />
                                                 }
                                             </td>
-                                            <td className="p-3 text-slate-300 text-xs max-w-[150px] truncate">
-                                                {row.data.dependencia || <span className="text-slate-600 italic">Sin dependencia</span>}
+                                            <td className="p-3 text-foreground text-xs max-w-[150px] truncate">
+                                                {row.data.dependencia || <span className="text-muted-foreground italic">Sin dependencia</span>}
                                             </td>
-                                            <td className="p-3 text-slate-300 text-xs max-w-[200px] truncate">
+                                            <td className="p-3 text-foreground text-xs max-w-[200px] truncate">
                                                 {selectedModule === 'piip' ? row.data.nombre_proyecto
                                                     : selectedModule === 'pam' ? row.data.meta_pdd
                                                         : row.data.descripcion}
                                             </td>
-                                            <td className="p-3 text-slate-300 text-xs max-w-[150px] truncate">
+                                            <td className="p-3 text-foreground text-xs max-w-[150px] truncate">
                                                 {selectedModule === 'piip'
                                                     ? (row.data.presupuesto_asignado
                                                         ? `$${Number(row.data.presupuesto_asignado).toLocaleString('es-CO')}`

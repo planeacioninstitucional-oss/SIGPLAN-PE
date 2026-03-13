@@ -148,14 +148,14 @@ export default function MiGestionPage() {
         const periods = getPeriodsForInstrument(inst)
 
         return (
-            <Card key={`${dep.id}-${inst.id}`} className="card-glass border-slate-800 mb-6 bg-slate-900/20">
-                <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center justify-between gap-2 text-base text-slate-200">
+            <Card key={`${dep.id}-${inst.id}`} className="card-glass border-border mb-6 bg-card">
+                <CardHeader className="pb-3 border-b border-border/50">
+                    <CardTitle className="flex items-center justify-between gap-2 text-base text-foreground">
                         <div className="flex items-center gap-2">
                             <FileText className="w-4 h-4 text-blue-400" />
                             {inst.nombre}
                         </div>
-                        <span className="text-[10px] text-slate-500 uppercase font-bold px-2 py-0.5 bg-slate-800 rounded">
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold px-2 py-0.5 bg-muted rounded border border-border/50">
                             {dep.nombre}
                         </span>
                     </CardTitle>
@@ -174,10 +174,10 @@ export default function MiGestionPage() {
                                 <div
                                     key={period}
                                     onClick={() => handleOpenDialog(dep, inst, period)}
-                                    className="flex flex-col items-center justify-center p-2 rounded-lg border border-slate-800 bg-slate-900/40 hover:bg-slate-800 transition-all cursor-pointer group w-20"
+                                    className="flex flex-col items-center justify-center p-2 rounded-lg border border-border bg-card hover:bg-muted transition-all cursor-pointer group w-24"
                                 >
-                                    <span className="text-[10px] font-medium text-slate-500 mb-1.5 truncate w-full text-center">{period}</span>
-                                    <SemaforoCell estado={status} className="w-7 h-7 group-hover:scale-110 transition-transform" />
+                                    <span className="text-[10px] font-medium text-muted-foreground mb-1.5 truncate w-full text-center">{period}</span>
+                                    <SemaforoCell estado={status} className="w-10 h-10 group-hover:scale-110 transition-transform" />
                                 </div>
                             )
                         })}
@@ -203,8 +203,8 @@ export default function MiGestionPage() {
                     <Layout className="w-8 h-8 text-slate-600" />
                 </div>
                 <div>
-                    <h3 className="text-white font-bold text-lg">No tienes una oficina asignada</h3>
-                    <p className="text-slate-400 text-sm max-w-xs mx-auto">Contacta al administrador para que tu perfil sea vinculado a una oficina y sus procesos.</p>
+                    <h3 className="text-foreground font-bold text-lg">No tienes una oficina asignada</h3>
+                    <p className="text-muted-foreground text-sm max-w-xs mx-auto">Contacta al administrador para que tu perfil sea vinculado a una oficina y sus procesos.</p>
                 </div>
             </div>
         )
@@ -218,16 +218,16 @@ export default function MiGestionPage() {
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
                         <Layout className="w-8 h-8 text-blue-500" />
                         Mi Gestión
                     </h1>
-                    <p className="text-slate-400">Resumen de procesos y seguimientos asignados</p>
+                    <p className="text-muted-foreground">Resumen de procesos y seguimientos asignados</p>
                 </div>
             </div>
 
             <Tabs defaultValue="mensual" className="w-full">
-                <TabsList className="mb-6 bg-slate-900/50 border border-slate-800 p-1">
+                <TabsList className="mb-6 bg-muted border border-border p-1">
                     <TabsTrigger value="mensual" className="data-[state=active]:bg-blue-600">Mensuales</TabsTrigger>
                     <TabsTrigger value="trimestral" className="data-[state=active]:bg-teal-600">Trim./Cuatrim.</TabsTrigger>
                     <TabsTrigger value="anual" className="data-[state=active]:bg-purple-600">Sem./Anuales</TabsTrigger>

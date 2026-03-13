@@ -153,11 +153,11 @@ export default function MisInstrumentosPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
                     <FileCheck className="w-8 h-8 text-blue-500 dark:text-blue-400" />
                     Mis Instrumentos
                 </h1>
-                <p className="text-gray-500 dark:text-slate-400 mt-1">
+                <p className="text-muted-foreground mt-1">
                     Reporte su cumplimiento por instrumento — Vigencia{' '}
                     <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span>
                 </p>
@@ -188,7 +188,7 @@ export default function MisInstrumentosPage() {
 
                         return (
                             <div key={groupName} className="space-y-4">
-                                <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800 dark:text-slate-100">
+                                <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                                     <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
                                     Proceso: {groupName}
                                 </h2>
@@ -200,7 +200,7 @@ export default function MisInstrumentosPage() {
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <CardTitle className="text-sm font-bold text-blue-700 dark:text-blue-300 uppercase tracking-tighter">Plan de Acción Municipal</CardTitle>
-                                                        <CardDescription className="text-xs text-gray-600 dark:text-slate-400 mt-1 line-clamp-1">{pam.programa}</CardDescription>
+                                                        <CardDescription className="text-xs text-muted-foreground mt-1 line-clamp-1">{pam.programa}</CardDescription>
                                                     </div>
                                                     <div className="flex items-center gap-3">
                                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-600 dark:text-blue-300 uppercase">Estado General</span>
@@ -218,7 +218,7 @@ export default function MisInstrumentosPage() {
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <CardTitle className="text-sm font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-tighter">Proyecto PIIP</CardTitle>
-                                                        <CardDescription className="text-xs text-gray-600 dark:text-slate-400 mt-1 line-clamp-1">{piip.nombre_proyecto}</CardDescription>
+                                                        <CardDescription className="text-xs text-muted-foreground mt-1 line-clamp-1">{piip.nombre_proyecto}</CardDescription>
                                                     </div>
                                                     <div className="flex items-center gap-3">
                                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 uppercase">Estado General</span>
@@ -249,20 +249,20 @@ export default function MisInstrumentosPage() {
                                         const pct = total > 0 ? Math.round((cumplidos / total) * 100) : 0
 
                                         return (
-                                            <Card key={`${groupName}-${inst.id}`} className="card-glass border-border bg-white dark:bg-slate-900/40">
+                                            <Card key={`${groupName}-${inst.id}`} className="card-glass border-border bg-card">
                                                 <CardHeader className="pb-3">
                                                     <div className="flex items-start justify-between gap-4">
                                                         <div>
-                                                            <CardTitle className="text-base text-gray-900 dark:text-slate-100">{inst.nombre}</CardTitle>
+                                                            <CardTitle className="text-base text-foreground">{inst.nombre}</CardTitle>
                                                             {inst.descripcion && (
-                                                                <CardDescription className="text-muted-foreground dark:text-slate-500 text-xs mt-1">{inst.descripcion}</CardDescription>
+                                                                <CardDescription className="text-muted-foreground text-xs mt-1">{inst.descripcion}</CardDescription>
                                                             )}
                                                         </div>
                                                         <div className="flex items-center gap-2 shrink-0">
                                                             <span className={cn('text-[11px] px-2 py-0.5 rounded border font-semibold', FRECUENCIA_COLOR[inst.frecuencia])}>
                                                                 {FRECUENCIA_LABEL[inst.frecuencia]}
                                                             </span>
-                                                            <span className="text-xs text-muted-foreground dark:text-slate-400">{cumplidos}/{total}</span>
+                                                            <span className="text-xs text-muted-foreground">{cumplidos}/{total}</span>
                                                         </div>
                                                     </div>
                                                     <div className="w-full h-1.5 bg-gray-100 dark:bg-slate-800 rounded-full mt-2 overflow-hidden">
@@ -288,10 +288,10 @@ export default function MisInstrumentosPage() {
                                                                     }}
                                                                     className={cn(
                                                                         'flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg border transition-all duration-200',
-                                                                        'hover:bg-gray-50 dark:hover:bg-slate-700/50 hover:border-gray-300 dark:hover:border-slate-600 hover:scale-105',
+                                                                        'hover:bg-muted/50 hover:border-blue-500/30 hover:scale-105',
                                                                         estado === 'gris'
-                                                                            ? 'border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-900/40'
-                                                                            : 'border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900/60 shadow-sm'
+                                                                            ? 'border-border bg-card'
+                                                                            : 'border-border/80 bg-card shadow-sm'
                                                                     )}
                                                                 >
                                                                     <SemaforoCell estado={estado} />
