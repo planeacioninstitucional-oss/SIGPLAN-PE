@@ -20,6 +20,7 @@ import { Loader2, Plus, Edit, Trash2 } from 'lucide-react'
 import type { PlanAccionMunicipal, Dependencia, RolUsuario } from '@/types/database'
 import { PamDialog } from '@/components/pam/PamDialog'
 import { SemaforoCell } from '@/components/seguimientos/SemaforoCell'
+import { PermisoGuard } from '@/components/auth/PermisoGuard'
 
 export default function PamPage() {
     const { vigenciaActual } = useVigenciaStore()
@@ -96,6 +97,7 @@ export default function PamPage() {
     }
 
     return (
+        <PermisoGuard modulo="pam">
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
@@ -207,5 +209,6 @@ export default function PamPage() {
                 )
             }
         </div >
+        </PermisoGuard>
     )
 }

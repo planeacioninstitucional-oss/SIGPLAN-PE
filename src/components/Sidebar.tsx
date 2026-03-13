@@ -10,7 +10,6 @@ import {
     Calendar,
     ClipboardList,
     ShieldAlert,
-    UploadCloud,
     Settings,
     Users,
     X,
@@ -21,10 +20,12 @@ import {
     Building2,
     Briefcase,
     History,
-    FileSpreadsheet
+    FileSpreadsheet,
+    Shield,
+    Loader2
 } from 'lucide-react'
 import type { RolUsuario, Perfil } from '@/types/database'
-import { hasSidebarAccess } from '@/lib/responsabilidades'
+import { usePermisos, type ModuloPermiso } from '@/lib/hooks/usePermisos'
 
 interface SidebarProps {
     isOpen: boolean
@@ -36,8 +37,10 @@ type MenuItem = {
     name: string
     icon: React.ElementType
     href: string
+    /** Roles that can see this item (undefined = all roles) */
     roles?: RolUsuario[]
-    oficinasHabilitadas?: string[]
+    /** If set, the item is only shown when the user has view permission for this module */
+    moduloPermiso?: ModuloPermiso
 }
 
 type MenuSection = {
@@ -60,40 +63,48 @@ const MENU_ITEMS: MenuSection[] = [
                 name: 'Mesa de Control',
                 icon: History,
                 href: '/seguimientos',
-                roles: ['super_admin', 'equipo_planeacion']
+                roles: ['super_admin', 'equipo_planeacion', 'gerente'],
             },
             {
                 name: 'Mi Gestión',
                 icon: ClipboardList,
                 href: '/mi-gestion',
-                roles: ['jefe_oficina']
+                roles: ['jefe_oficina'],
             },
             {
                 name: 'Mis Instrumentos',
                 icon: FileCheck,
                 href: '/mis-instrumentos',
-                roles: ['jefe_oficina', 'equipo_planeacion']
+                roles: ['jefe_oficina', 'equipo_planeacion', 'super_admin'],
+                moduloPermiso: 'mis_instrumentos',
             },
             {
                 name: 'Metas PDD',
                 icon: Target,
                 href: '/metas-pdd',
-                roles: ['super_admin', 'equipo_planeacion', 'jefe_oficina']
+                roles: ['super_admin', 'equipo_planeacion', 'jefe_oficina', 'gerente'],
+                moduloPermiso: 'metas_pdd',
             },
             {
                 name: 'Proyectos (PIIP)',
                 icon: Briefcase,
-                href: '/piip'
+                href: '/piip',
+                roles: ['super_admin', 'equipo_planeacion', 'jefe_oficina', 'gerente'],
+                moduloPermiso: 'piip',
             },
             {
                 name: 'Plan Acción Mun.',
                 icon: Building2,
-                href: '/plan-accion-municipal'
+                href: '/plan-accion-municipal',
+                roles: ['super_admin', 'equipo_planeacion', 'jefe_oficina', 'gerente'],
+                moduloPermiso: 'pam',
             },
             {
                 name: 'Alistamiento',
                 icon: ShieldAlert,
                 href: '/alistamiento',
+                roles: ['super_admin', 'equipo_planeacion', 'jefe_oficina', 'gerente'],
+                moduloPermiso: 'alistamiento',
             },
         ],
     },
@@ -104,7 +115,7 @@ const MENU_ITEMS: MenuSection[] = [
                 name: 'Reportes Gerenciales',
                 icon: PieChart,
                 href: '/reportes',
-                roles: ['super_admin', 'gerente', 'auditor']
+                roles: ['super_admin', 'gerente', 'auditor'],
             },
         ],
     },
@@ -115,25 +126,32 @@ const MENU_ITEMS: MenuSection[] = [
                 name: 'Usuarios',
                 icon: Users,
                 href: '/admin/usuarios',
-                roles: ['super_admin']
+                roles: ['super_admin'],
             },
             {
                 name: 'Vigencias',
                 icon: Calendar,
                 href: '/admin/vigencias',
-                roles: ['super_admin']
+                roles: ['super_admin'],
+            },
+            {
+                name: 'Permisos por Oficina',
+                icon: Shield,
+                href: '/admin/permisos',
+                roles: ['super_admin', 'equipo_planeacion'],
             },
             {
                 name: 'Importar Excel',
                 icon: FileSpreadsheet,
                 href: '/admin/importar',
-                roles: ['super_admin', 'equipo_planeacion', 'jefe_oficina']
+                roles: ['super_admin', 'equipo_planeacion', 'jefe_oficina'],
+                moduloPermiso: 'importar',
             },
             {
                 name: 'Configuración',
                 icon: Settings,
                 href: '/admin/configuracion',
-                roles: ['super_admin']
+                roles: ['super_admin'],
             },
         ],
     },
@@ -141,32 +159,32 @@ const MENU_ITEMS: MenuSection[] = [
 
 export function Sidebar({ isOpen, toggleSidebar, userProfile }: SidebarProps) {
     const pathname = usePathname()
+    const { puedeVer, loading: permisosLoading } = usePermisos()
 
     const userRole = userProfile?.rol ?? 'funcionario'
-    const oficinaUsuario = userProfile?.oficinas?.nombre || ''
+    const oficinaNombre = userProfile?.oficinas?.nombre || ''
 
     const filterItems = (section: MenuSection) => {
+        // De-duplicate by href: prefer item without moduloPermiso for admin/equipo
+        const seen = new Set<string>()
         const filtered = section.items.filter(item => {
+            // Role check
             if (item.roles && !item.roles.includes(userRole as RolUsuario)) return false
 
-            if (item.oficinasHabilitadas && userRole !== 'super_admin') {
-                if (!item.oficinasHabilitadas.includes(oficinaUsuario)) {
-                    return false
-                }
+            // Permission check (only for items with moduloPermiso and non-admin roles)
+            if (item.moduloPermiso) {
+                if (!puedeVer(item.moduloPermiso)) return false
             }
 
-            if (!hasSidebarAccess(item.name, userProfile?.nombre_completo, userRole, oficinaUsuario)) {
-                return false
-            }
+            // Hide Mi Gestión if no office assigned
+            if (item.name === 'Mi Gestión' && !oficinaNombre) return false
 
-            // Hide Mi Gestión if they don't have an assigned office
-            if (item.name === 'Mi Gestión' && !oficinaUsuario) {
-                return false
-            }
+            // De-duplicate: if same href already added, skip
+            if (seen.has(item.href)) return false
+            seen.add(item.href)
 
             return true
         })
-
         return filtered.length > 0 ? { ...section, items: filtered } : null
     }
 
@@ -199,45 +217,51 @@ export function Sidebar({ isOpen, toggleSidebar, userProfile }: SidebarProps) {
                 </div>
 
                 <nav className="p-4 space-y-6 overflow-y-auto h-[calc(100vh-4rem)]">
-                    {MENU_ITEMS.map((section) => {
-                        const filteredSection = filterItems(section)
-                        if (!filteredSection) return null
+                    {permisosLoading ? (
+                        <div className="flex justify-center pt-8">
+                            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                        </div>
+                    ) : (
+                        MENU_ITEMS.map((section) => {
+                            const filteredSection = filterItems(section)
+                            if (!filteredSection) return null
 
-                        return (
-                            <div key={section.category}>
-                                <h3 className="mb-2 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                                    {section.category}
-                                </h3>
-                                <ul className="space-y-1">
-                                    {filteredSection.items.map((item) => {
-                                        const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-                                        return (
-                                            <li key={item.name}>
-                                                <Link
-                                                    href={item.href}
-                                                    className={cn(
-                                                        'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-                                                        isActive
-                                                            ? 'bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-600/20 shadow-sm dark:shadow-[0_0_15px_-3px_rgba(37,99,235,0.2)]'
-                                                            : 'text-muted-foreground hover:bg-gray-50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-slate-100'
-                                                    )}
-                                                >
-                                                    <item.icon
+                            return (
+                                <div key={section.category}>
+                                    <h3 className="mb-2 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                                        {section.category}
+                                    </h3>
+                                    <ul className="space-y-1">
+                                        {filteredSection.items.map((item) => {
+                                            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                                            return (
+                                                <li key={item.name + item.href}>
+                                                    <Link
+                                                        href={item.href}
                                                         className={cn(
-                                                            'w-4 h-4 transition-colors',
-                                                            isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:group-hover:text-slate-300'
+                                                            'group flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                                                            isActive
+                                                                ? 'bg-blue-50 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-600/20 shadow-sm dark:shadow-[0_0_15px_-3px_rgba(37,99,235,0.2)]'
+                                                                : 'text-muted-foreground hover:bg-gray-50 dark:hover:bg-white/5 hover:text-foreground dark:hover:text-slate-100'
                                                         )}
-                                                    />
-                                                    {item.name}
-                                                    {isActive && <ChevronRight className="ml-auto w-4 h-4 text-blue-400/50" />}
-                                                </Link>
-                                            </li>
-                                        )
-                                    })}
-                                </ul>
-                            </div>
-                        )
-                    })}
+                                                    >
+                                                        <item.icon
+                                                            className={cn(
+                                                                'w-4 h-4 transition-colors',
+                                                                isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:group-hover:text-slate-300'
+                                                            )}
+                                                        />
+                                                        {item.name}
+                                                        {isActive && <ChevronRight className="ml-auto w-4 h-4 text-blue-400/50" />}
+                                                    </Link>
+                                                </li>
+                                            )
+                                        })}
+                                    </ul>
+                                </div>
+                            )
+                        })
+                    )}
                 </nav>
             </aside>
         </>

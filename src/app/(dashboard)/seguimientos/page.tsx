@@ -155,12 +155,28 @@ export default function SeguimientosPage() {
     useEffect(() => { fetchSeguimientos() }, [fetchSeguimientos])
 
     // ── Helpers ─────────────────────────────────────────────────────────────
+    
+    // Filter instruments based on user profile responsibility
+    const visibleInstrumentos = useMemo(() => {
+        if (!userProfile) return []
 
-    // Filter instruments based on user profile responsibility explicitly mapping the list provided
-    const visibleInstrumentos = instrumentos.filter(i => {
-        if (!userProfile) return false;
-        return canViewInstrumento(i.nombre, userProfile.nombre_completo, userProfile.rol);
-    });
+        // 1. Planeación con asignaciones específicas → Ver SOLO lo asignado
+        if (userProfile.rol === 'equipo_planeacion' && myAssignedIds.length > 0) {
+            return instrumentos.filter(i => myAssignedIds.includes(i.id))
+        }
+
+        // 2. Comportamiento estándar basado en rol (Super Admin ve todo)
+        return instrumentos.filter(i => {
+            return canViewInstrumento(i.nombre, userProfile.nombre_completo, userProfile.rol)
+        })
+    }, [instrumentos, userProfile, myAssignedIds])
+
+    // Sincronizar selección: si el instrumento actual no es visible, seleccionar el primero visible
+    useEffect(() => {
+        if (visibleInstrumentos.length > 0 && !visibleInstrumentos.find(i => i.id === selectedInstrumentoId)) {
+            setSelectedInstrumentoId(visibleInstrumentos[0].id)
+        }
+    }, [visibleInstrumentos, selectedInstrumentoId])
 
     const currentInstrumento = instrumentos.find(i => i.id === selectedInstrumentoId)
     const periods = currentInstrumento ? getPeriodsForFrecuencia(currentInstrumento.frecuencia) : []

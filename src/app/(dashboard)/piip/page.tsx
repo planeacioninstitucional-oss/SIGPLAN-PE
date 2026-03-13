@@ -20,6 +20,7 @@ import { Loader2, Plus, Edit, Trash2 } from 'lucide-react'
 import type { Piip, Dependencia } from '@/types/database'
 import { PiipDialog } from '@/components/piip/PiipDialog'
 import { SemaforoCell } from '@/components/seguimientos/SemaforoCell'
+import { PermisoGuard } from '@/components/auth/PermisoGuard'
 
 export default function PiipPage() {
     const { vigenciaActual } = useVigenciaStore()
@@ -102,6 +103,7 @@ export default function PiipPage() {
     }
 
     return (
+        <PermisoGuard modulo="piip">
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
@@ -202,6 +204,7 @@ export default function PiipPage() {
                 projectToEdit={editingProject}
                 onSuccess={fetchProjects}
             />
-        </div >
+            </div >
+        </PermisoGuard>
     )
 }

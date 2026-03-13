@@ -10,6 +10,8 @@ import { SemaforoCell } from '@/components/seguimientos/SemaforoCell'
 import { SeguimientoDialog } from '@/components/seguimientos/SeguimientoDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { usePermisos } from '@/lib/hooks/usePermisos'
+import { Eye } from 'lucide-react'
 import { getDependenciasParaInstrumento, formatDependenciaName, getMisDependencias } from '@/lib/responsabilidades'
 
 function getPeriodsForFrecuencia(frecuencia: FrecuenciaInstrumento): string[] {
@@ -41,6 +43,8 @@ const FRECUENCIA_LABEL: Record<FrecuenciaInstrumento, string> = {
 
 export default function MisInstrumentosPage() {
     const { vigenciaActual } = useVigenciaStore()
+    const { puedeEditar, esAdmin, loading: permisosLoading } = usePermisos()
+    const canEdit = puedeEditar('mis_instrumentos') // only true for super_admin / equipo_planeacion
     const [loading, setLoading] = useState(true)
 
     const [instrumentos, setInstrumentos] = useState<Instrumento[]>([])
@@ -133,8 +137,11 @@ export default function MisInstrumentosPage() {
         seguimientosMap.get(`${depId}-${instrId}-${periodo}`) ?? null
 
     const handleClick = (dependencia: Dependencia, instrumento: Instrumento, periodo: string) => {
-        if (!['super_admin', 'equipo_planeacion'].includes(userProfile?.rol || '') && userProfile?.rol !== 'jefe_oficina') {
-            toast.error('Solo tienes permisos de visualización.')
+        // Only admins/equipo_planeacion can edit; jefes just view
+        if (!canEdit) {
+            // Still open dialog but in read-only mode
+            setSelectedCell({ dependencia, instrumento, periodo, seguimiento: getSeguimientoPara(dependencia.id, instrumento.id, periodo) })
+            setDialogOpen(true)
             return
         }
         setSelectedCell({ dependencia, instrumento, periodo, seguimiento: getSeguimientoPara(dependencia.id, instrumento.id, periodo) })
@@ -158,9 +165,16 @@ export default function MisInstrumentosPage() {
                     Mis Instrumentos
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                    Reporte su cumplimiento por instrumento — Vigencia{' '}
-                    <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span>
+                    {canEdit
+                        ? <>Edite el cumplimiento por instrumento — Vigencia <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span></>
+                        : <>Consulte su cumplimiento por instrumento — Vigencia <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span></>}
                 </p>
+                {!canEdit && (
+                    <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-border text-sm text-muted-foreground">
+                        <Eye className="w-4 h-4 shrink-0 text-blue-500" />
+                        <span>Modo <strong>solo lectura</strong> — los estados los actualiza el Equipo de Planeación.</span>
+                    </div>
+                )}
             </div>
 
             {loading ? (
@@ -282,13 +296,15 @@ export default function MisInstrumentosPage() {
                                                                 <button
                                                                     key={period}
                                                                     onClick={() => {
-                                                                        // Pick the dep that HAS a seguimiento, or default to the first one
                                                                         const existingDep = groupDeps.find(d => getSeguimientoPara(d.id, inst.id, period))
                                                                         handleClick(existingDep || groupDeps[0], inst, period)
                                                                     }}
+                                                                    title={canEdit ? 'Clic para actualizar' : 'Solo lectura — actualizado por Equipo de Planeación'}
                                                                     className={cn(
                                                                         'flex flex-col items-center gap-1.5 px-3 py-2 rounded-lg border transition-all duration-200',
-                                                                        'hover:bg-muted/50 hover:border-blue-500/30 hover:scale-105',
+                                                                        canEdit
+                                                                            ? 'hover:bg-muted/50 hover:border-blue-500/30 hover:scale-105 cursor-pointer'
+                                                                            : 'cursor-default opacity-90',
                                                                         estado === 'gris'
                                                                             ? 'border-border bg-card'
                                                                             : 'border-border/80 bg-card shadow-sm'

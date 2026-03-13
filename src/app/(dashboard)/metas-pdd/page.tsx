@@ -24,8 +24,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
 import { useAuthStore } from '@/stores/authStore'
-import { hasSidebarAccess } from '@/lib/responsabilidades'
 import { notifyUsersByRole } from '@/lib/notifications'
+import { PermisoGuard } from '@/components/auth/PermisoGuard'
 
 export default function MetasPddPage() {
     const { vigenciaActual } = useVigenciaStore()
@@ -56,24 +56,17 @@ export default function MetasPddPage() {
     })
 
     const [hasAccess, setHasAccess] = useState(false)
+    const [saving, setSaving] = useState(false)
     const supabase = createClient()
 
     useEffect(() => {
         if (!initialized) return
-
         if (userProfile) {
             setDependencia((userProfile as any).oficinas as Dependencia)
-
-            // Comprobar Acceso: Permite si es super usuario o si tiene acceso según responsabilidades
-            const authorizedByName = hasSidebarAccess('Metas PDD', userProfile.nombre_completo, userProfile.rol, (userProfile as any).oficinas?.nombre)
-
-            if (isPddAdmin || authorizedByName) {
-                setHasAccess(true)
-            } else {
-                setLoading(false)
-            }
+            // Access is now controlled by PermisoGuard; just mark as accessible
+            setHasAccess(true)
         }
-    }, [initialized, userProfile, isPddAdmin])
+    }, [initialized, userProfile])
 
     useEffect(() => {
         if (!hasAccess || !vigenciaActual) return
@@ -188,7 +181,7 @@ export default function MetasPddPage() {
             return
         }
 
-        setLoading(true)
+        setSaving(true)
         try {
             const payload: any = {
                 vigencia_id: vigenciaActual.id,
@@ -201,66 +194,35 @@ export default function MetasPddPage() {
                 observaciones: formData.observaciones,
             }
 
-            const { error } = await supabase
-                .from('metas_pdd')
-                .upsert(
-                    editingMeta ? { id: editingMeta.id, ...payload } : payload
-                )
-
-            if (error) throw error
-
-            // --- Notification Logic ---
-            if (!isPddAdmin) {
-                // Modified by Office -> Notify Planeación
-                await notifyUsersByRole(['super_admin', 'equipo_planeacion'], {
-                    titulo: `Modificación Meta PDD: ${formData.codigo_meta}`,
-                    mensaje: `Se ha actualizado una meta del Plan de Desarrollo.`,
-                    tipo: 'meta_update',
-                    link: `/metas-pdd`,
-                    metadata: { meta_id: editingMeta?.id }
-                })
+            let saveError: any = null
+            if (editingMeta) {
+                // Explicit UPDATE by ID — more reliable than upsert
+                const { error } = await supabase
+                    .from('metas_pdd')
+                    .update(payload)
+                    .eq('id', editingMeta.id)
+                saveError = error
             } else {
-                // Modified by Planeación -> Notify Office Jefe
-                const depName = todasDependencias.find(d => d.id === targetDependenciaId)?.nombre || ''
-
-                const { data: procData } = await supabase
-                    .from('procesos_institucionales')
-                    .select('oficina_id')
-                    .ilike('nombre', `%${depName.replace('Gestión ', '').replace('Gestion ', '').trim()}%`)
-                    .limit(1)
-                    .single()
-
-                const targetOficinaId = procData?.oficina_id || targetDependenciaId
-
-                const { data: officeUsers } = await supabase
-                    .from('perfiles')
-                    .select('id')
-                    .eq('oficina_id', targetOficinaId)
-                    .eq('rol', 'jefe_oficina')
-
-                if (officeUsers && officeUsers.length > 0) {
-                    const notifs = officeUsers.map(u => ({
-                        user_id: u.id,
-                        titulo: `Actualización Planeación (PDD)`,
-                        mensaje: `Planeación ha modificado la meta: ${formData.codigo_meta}.`,
-                        tipo: 'meta_update',
-                        link: `/metas-pdd`,
-                        metadata: { meta_id: editingMeta?.id }
-                    }))
-                    await supabase.from('notificaciones').insert(notifs)
-                }
+                // INSERT
+                const { error } = await supabase
+                    .from('metas_pdd')
+                    .insert(payload)
+                saveError = error
             }
-            // --------------------------
 
-            toast.success('Meta guardada')
+            if (saveError) throw saveError
+
+            toast.success(editingMeta ? 'Meta actualizada correctamente' : 'Meta creada correctamente')
             setDialogOpen(false)
-            fetchMetas()
+            // Refresh list after dialog closes
+            await fetchMetas()
         } catch (error: any) {
             toast.error('Error al guardar', { description: error.message })
         } finally {
-            setLoading(false)
+            setSaving(false)
         }
     }
+
 
     if (loading) {
         return (
@@ -285,6 +247,7 @@ export default function MetasPddPage() {
     }
 
     return (
+        <PermisoGuard modulo="metas_pdd">
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
@@ -458,12 +421,13 @@ export default function MetasPddPage() {
                         <Button variant="ghost" onClick={() => setDialogOpen(false)} className="text-slate-400 hover:text-white hover:bg-slate-800">
                             Cancelar
                         </Button>
-                        <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-500">
-                            Guardar
+                        <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-500">
+                            {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</> : 'Guardar'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
+        </PermisoGuard>
     )
 }
