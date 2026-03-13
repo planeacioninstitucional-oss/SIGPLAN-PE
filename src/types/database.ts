@@ -223,6 +223,18 @@ export interface MetasPdd {
     dependencias?: Dependencia
 }
 
+export interface Notificacion {
+    id: string
+    user_id: string
+    titulo: string
+    mensaje: string
+    tipo: 'info' | 'success' | 'warning' | 'error' | 'meta_update' | 'observacion'
+    leida: boolean
+    link: string | null
+    metadata: any
+    created_at: string
+}
+
 // ─── Constantes ──────────────────────────────────────────────────────────────
 
 export const CHECKPOINTS = [

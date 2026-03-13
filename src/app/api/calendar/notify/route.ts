@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(req: Request) {
     try {
@@ -17,12 +18,21 @@ export async function POST(req: Request) {
         console.log('Body: Tienes un nuevo seguimiento o tarea asginada. Por favor revisa la plataforma.');
         console.log('------------------------------------');
 
-        // In the future:
-        // 1. Fetch user emails from supabase using the assignee IDs
-        // 2. Fetch event details using eventId
-        // 3. await resend.emails.send({ ... })
+        // Create Internal Notifications
+        const supabase = await createClient();
+        const notifications = assignees.map(userId => ({
+            user_id: userId,
+            titulo: 'Nuevo Evento en Calendario',
+            mensaje: 'Se te ha asignado un nuevo evento o tarea en el Calendario Institucional.',
+            tipo: 'calendario',
+            link: '/calendario',
+            metadata: { event_id: eventId }
+        }));
 
-        return NextResponse.json({ success: true, message: 'Emails queued (mock)' });
+        const { error: notifError } = await supabase.from('notificaciones').insert(notifications);
+        if (notifError) console.error('Error creating calendar notifications:', notifError);
+
+        return NextResponse.json({ success: true, message: 'Notifications created and emails queued (mock)' });
     } catch (error) {
         console.error('Error in notify route:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

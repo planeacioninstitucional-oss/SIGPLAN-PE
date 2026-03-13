@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { Loader2, Info, Link as LinkIcon, DollarSign, Target, FileText, Layout } from 'lucide-react'
 import type { Piip, Dependencia } from '@/types/database'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { createNotification, notifyUsersByRole } from '@/lib/notifications'
 
 interface PiipDialogProps {
     open: boolean
@@ -126,6 +127,49 @@ export function PiipDialog({
                 )
 
             if (error) throw error
+
+            // --- Notification Logic ---
+            if (!isAdmin) {
+                // Modified by Office -> Notify Planeación
+                await notifyUsersByRole(['super_admin', 'equipo_planeacion'], {
+                    titulo: `Modificación PIIP: ${formData.nombre_proyecto}`,
+                    mensaje: `Se ha actualizado el proyecto PIIP. Estado: ${formData.estado.toUpperCase()}`,
+                    tipo: 'info',
+                    link: `/piip`,
+                    metadata: { project_id: projectToEdit?.id }
+                })
+            } else {
+                // Modified by Planeación -> Notify Office Jefe
+                const depName = todasDependencias.find(d => d.id === targetDependenciaId)?.nombre || ''
+                
+                const { data: procData } = await supabase
+                    .from('procesos_institucionales')
+                    .select('oficina_id')
+                    .ilike('nombre', `%${depName.replace('Gestión ', '').replace('Gestion ', '').trim()}%`)
+                    .limit(1)
+                    .single()
+
+                const targetOficinaId = procData?.oficina_id || targetDependenciaId
+
+                const { data: officeUsers } = await supabase
+                    .from('perfiles')
+                    .select('id')
+                    .eq('oficina_id', targetOficinaId)
+                    .eq('rol', 'jefe_oficina')
+
+                if (officeUsers && officeUsers.length > 0) {
+                    const notifs = officeUsers.map(u => ({
+                        user_id: u.id,
+                        titulo: `Actualización Planeación (PIIP)`,
+                        mensaje: `Planeación ha modificado el proyecto: ${formData.nombre_proyecto}. Estado: ${formData.estado.toUpperCase()}`,
+                        tipo: formData.estado === 'rojo' ? 'warning' : 'success',
+                        link: `/piip`,
+                        metadata: { project_id: projectToEdit?.id }
+                    }))
+                    await supabase.from('notificaciones').insert(notifs)
+                }
+            }
+            // --------------------------
 
             toast.success('Proyecto guardado correctamente')
             onSuccess()

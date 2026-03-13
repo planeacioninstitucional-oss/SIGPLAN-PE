@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 import { useAuthStore } from '@/stores/authStore'
 import { hasSidebarAccess } from '@/lib/responsabilidades'
+import { notifyUsersByRole } from '@/lib/notifications'
 
 export default function MetasPddPage() {
     const { vigenciaActual } = useVigenciaStore()
@@ -207,6 +208,50 @@ export default function MetasPddPage() {
                 )
 
             if (error) throw error
+
+            // --- Notification Logic ---
+            if (!isPddAdmin) {
+                // Modified by Office -> Notify Planeación
+                await notifyUsersByRole(['super_admin', 'equipo_planeacion'], {
+                    titulo: `Modificación Meta PDD: ${formData.codigo_meta}`,
+                    mensaje: `Se ha actualizado una meta del Plan de Desarrollo.`,
+                    tipo: 'meta_update',
+                    link: `/metas-pdd`,
+                    metadata: { meta_id: editingMeta?.id }
+                })
+            } else {
+                // Modified by Planeación -> Notify Office Jefe
+                const depName = todasDependencias.find(d => d.id === targetDependenciaId)?.nombre || ''
+
+                const { data: procData } = await supabase
+                    .from('procesos_institucionales')
+                    .select('oficina_id')
+                    .ilike('nombre', `%${depName.replace('Gestión ', '').replace('Gestion ', '').trim()}%`)
+                    .limit(1)
+                    .single()
+
+                const targetOficinaId = procData?.oficina_id || targetDependenciaId
+
+                const { data: officeUsers } = await supabase
+                    .from('perfiles')
+                    .select('id')
+                    .eq('oficina_id', targetOficinaId)
+                    .eq('rol', 'jefe_oficina')
+
+                if (officeUsers && officeUsers.length > 0) {
+                    const notifs = officeUsers.map(u => ({
+                        user_id: u.id,
+                        titulo: `Actualización Planeación (PDD)`,
+                        mensaje: `Planeación ha modificado la meta: ${formData.codigo_meta}.`,
+                        tipo: 'meta_update',
+                        link: `/metas-pdd`,
+                        metadata: { meta_id: editingMeta?.id }
+                    }))
+                    await supabase.from('notificaciones').insert(notifs)
+                }
+            }
+            // --------------------------
+
             toast.success('Meta guardada')
             setDialogOpen(false)
             fetchMetas()

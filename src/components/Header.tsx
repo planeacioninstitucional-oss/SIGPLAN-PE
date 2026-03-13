@@ -20,6 +20,7 @@ import { useTheme } from 'next-themes'
 import type { Perfil } from '@/types/database'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { NotificationBell } from './NotificationBell'
 
 interface HeaderProps {
     toggleSidebar: () => void
@@ -152,10 +153,7 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
             <div className="h-6 w-px bg-gray-200 dark:bg-white/10 mx-2" />
 
             {/* Notifications */}
-            <button className="relative text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            </button>
+            <NotificationBell />
 
             {/* Theme Toggle */}
             <button
@@ -174,7 +172,7 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
                 >
                     <div className="hidden text-right md:block">
                         <p className="text-sm font-medium text-foreground dark:text-slate-200 leading-none">{userProfile?.nombre_completo || 'Usuario'}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{(userProfile?.oficinas as any)?.nombre || userProfile?.cargo || 'Sin Dependencia'}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{userProfile?.oficinas?.nombre || userProfile?.cargo || 'Sin Dependencia'}</p>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold ring-2 ring-gray-200 dark:ring-white/10">
                         {userProfile?.nombre_completo?.charAt(0) || 'U'}
@@ -190,11 +188,17 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
                                 <p className="text-xs text-gray-500 dark:text-slate-500 truncate">{userProfile?.email}</p>
                             </div>
 
-                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors text-left">
+                            <button 
+                                onClick={() => { setShowUserMenu(false); router.push('/dashboard') }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors text-left"
+                            >
                                 <User className="w-4 h-4" />
                                 Mi Perfil
                             </button>
-                            <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors text-left">
+                            <button 
+                                onClick={() => { setShowUserMenu(false); router.push('/admin/configuracion') }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors text-left"
+                            >
                                 <Settings className="w-4 h-4" />
                                 Configuración
                             </button>

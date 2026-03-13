@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { notifyUsersByRole } from '@/lib/notifications'
 import type { PlanAccionMunicipal, Dependencia } from '@/types/database'
 
 interface PamDialogProps {
@@ -132,6 +133,50 @@ export function PamDialog({
                 )
 
             if (error) throw error
+
+            // --- Notification Logic ---
+            const isAdmin = ['super_admin', 'equipo_planeacion'].includes(userRole)
+            if (!isAdmin) {
+                // Modified by Office -> Notify Planeación
+                await notifyUsersByRole(['super_admin', 'equipo_planeacion'], {
+                    titulo: `Modificación PAM: ${formData.programa}`,
+                    mensaje: `Se ha actualizado un registro del Plan de Acción Municipal. Estado: ${formData.estado.toUpperCase()}`,
+                    tipo: 'info',
+                    link: `/plan-accion-municipal`,
+                    metadata: { pam_id: pamToEdit?.id }
+                })
+            } else {
+                // Modified by Planeación -> Notify Office Jefe
+                const depName = todasDependencias.find(d => d.id === targetDependenciaId)?.nombre || ''
+                
+                const { data: procData } = await supabase
+                    .from('procesos_institucionales')
+                    .select('oficina_id')
+                    .ilike('nombre', `%${depName.replace('Gestión ', '').replace('Gestion ', '').trim()}%`)
+                    .limit(1)
+                    .single()
+
+                const targetOficinaId = procData?.oficina_id || targetDependenciaId
+
+                const { data: officeUsers } = await supabase
+                    .from('perfiles')
+                    .select('id')
+                    .eq('oficina_id', targetOficinaId)
+                    .eq('rol', 'jefe_oficina')
+
+                if (officeUsers && officeUsers.length > 0) {
+                    const notifs = officeUsers.map(u => ({
+                        user_id: u.id,
+                        titulo: `Actualización Planeación (PAM)`,
+                        mensaje: `Planeación ha modificado un registro del PAM: ${formData.programa}. Estado: ${formData.estado.toUpperCase()}`,
+                        tipo: formData.estado === 'rojo' ? 'warning' : 'success',
+                        link: `/plan-accion-municipal`,
+                        metadata: { pam_id: pamToEdit?.id }
+                    }))
+                    await supabase.from('notificaciones').insert(notifs)
+                }
+            }
+            // --------------------------
 
             toast.success('Registro guardado correctamente')
             onSuccess()

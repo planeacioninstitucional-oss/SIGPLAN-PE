@@ -73,6 +73,23 @@ export default function AdminUsuariosPage() {
         setDialogOpen(true)
     }
 
+    const handleDelete = async (user: Perfil) => {
+        if (!confirm(`¿Estás seguro de que deseas eliminar a ${user.nombre_completo}?`)) return
+        
+        try {
+            const { error } = await supabase
+                .from('perfiles')
+                .delete()
+                .eq('id', user.id)
+            
+            if (error) throw error
+            toast.success('Usuario eliminado correctamente')
+            fetchData()
+        } catch (err: any) {
+            toast.error('Error al eliminar', { description: err.message })
+        }
+    }
+
     // Stats
     const activos = users.filter(u => u.activo).length
     const inactivos = users.length - activos
@@ -87,16 +104,29 @@ export default function AdminUsuariosPage() {
                     </h1>
                     <p className="text-gray-500 dark:text-slate-400 mt-1">Administra perfiles, roles y asignación de oficinas</p>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={fetchData}
-                    disabled={loading}
-                    className="border-slate-700 hover:border-slate-600"
-                >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                    <span className="ml-2 hidden sm:inline">Actualizar</span>
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-500 text-white"
+                        onClick={() => {
+                            setEditingUser(null)
+                            setDialogOpen(true)
+                        }}
+                    >
+                        <Users className="w-4 h-4 mr-2" />
+                        Nuevo Usuario
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={fetchData}
+                        disabled={loading}
+                        className="border-slate-700 hover:border-slate-600"
+                    >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                        <span className="ml-2 hidden sm:inline">Actualizar</span>
+                    </Button>
+                </div>
             </div>
 
             {/* Stats cards */}
@@ -166,7 +196,7 @@ export default function AdminUsuariosPage() {
                                                 </span>
                                             </TableCell>
                                             <TableCell className="text-gray-700 dark:text-slate-300 text-sm">
-                                                {(user.oficinas as any)?.nombre || '—'}
+                                                {user.oficinas?.nombre || '—'}
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <Badge variant={user.activo ? 'verde' : 'rojo'}>
@@ -174,15 +204,25 @@ export default function AdminUsuariosPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleEdit(user)}
-                                                    className="hover:bg-blue-500/10 hover:text-blue-400"
-                                                >
-                                                    <Edit className="w-4 h-4 mr-1.5" />
-                                                    Editar
-                                                </Button>
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleEdit(user)}
+                                                        className="hover:bg-blue-500/10 hover:text-blue-400"
+                                                    >
+                                                        <Edit className="w-4 h-4 mr-1.5" />
+                                                        Editar
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleDelete(user)}
+                                                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                                    >
+                                                        Eliminar
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}

@@ -84,9 +84,11 @@ export default function LandingPage() {
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
                         </Link>
-                        <Button variant="ghost" className="text-slate-400 hover:text-white h-12 px-8">
-                            Ver Documentación
-                        </Button>
+                        <Link href="/docs">
+                            <Button variant="ghost" className="text-slate-400 hover:text-white h-12 px-8">
+                                Ver Documentación
+                            </Button>
+                        </Link>
                     </div>
                 </div>
 

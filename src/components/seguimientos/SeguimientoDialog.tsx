@@ -25,6 +25,7 @@ import { toast } from 'sonner'
 import { Loader2, ExternalLink } from 'lucide-react'
 import type { Seguimiento, Instrumento, Dependencia, RolUsuario } from '@/types/database'
 import { SemaforoCell } from './SemaforoCell'
+import { createNotification, notifyUsersByRole } from '@/lib/notifications'
 
 interface SeguimientoDialogProps {
     open: boolean
@@ -138,6 +139,49 @@ export function SeguimientoDialog({
                 )
 
             if (error) throw error
+
+            // --- Notification Logic ---
+            if (canEditOficina) {
+                // Notify Planeación admins that something was subido/updated
+                await notifyUsersByRole(['super_admin', 'equipo_planeacion'], {
+                    titulo: `Nuevo Seguimiento: ${instrumento.nombre}`,
+                    mensaje: `La oficina ${dependencia.nombre} ha subido un reporte para ${periodo}.`,
+                    tipo: 'info',
+                    link: `/seguimientos`,
+                    metadata: { seguimiento_id: seguimientoExistente?.id, instrumento_id: instrumento.id }
+                })
+            }
+
+            if (canEditEvaluador) {
+                // Find the office_id associated with this process name
+                const { data: procData } = await supabase
+                    .from('procesos_institucionales')
+                    .select('oficina_id')
+                    .ilike('nombre', `%${dependencia.nombre.replace('Gestión ', '').replace('Gestion ', '').trim()}%`)
+                    .limit(1)
+                    .single()
+
+                const targetOficinaId = procData?.oficina_id || dependencia.id
+
+                const { data: officeUsers } = await supabase
+                    .from('perfiles')
+                    .select('id')
+                    .eq('oficina_id', targetOficinaId)
+                    .eq('rol', 'jefe_oficina')
+
+                if (officeUsers && officeUsers.length > 0) {
+                    const notifs = officeUsers.map(u => ({
+                        user_id: u.id,
+                        titulo: `Evaluación de Seguimiento: ${instrumento.nombre}`,
+                        mensaje: `Planeación ha evaluado el reporte de ${periodo}. Estado: ${formData.estado_semaforo.toUpperCase()}`,
+                        tipo: formData.estado_semaforo === 'rojo' ? 'warning' : 'success',
+                        link: `/mi-gestion`,
+                        metadata: { seguimiento_id: seguimientoExistente?.id }
+                    }))
+                    await supabase.from('notificaciones').insert(notifs)
+                }
+            }
+            // --------------------------
 
             toast.success('Seguimiento guardado correctamente')
             onSuccess()
