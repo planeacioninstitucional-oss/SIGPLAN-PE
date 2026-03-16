@@ -28,6 +28,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
     }, [pathname, isPublicRoute, router, initialized, userProfile, fetchProfile])
 
+    // Protección de rutas administrativas
+    useEffect(() => {
+        if (pathname.startsWith('/admin/') && initialized && userProfile) {
+            const nombreCompleto = userProfile.nombre_completo?.toLowerCase().trim() || ''
+            const adminsAutorizados = [
+                'jarol mauricio santos luna',
+                'manuela lucia gomez guacanez'
+            ]
+            if (!adminsAutorizados.includes(nombreCompleto)) {
+                router.push('/dashboard')
+            }
+        }
+    }, [pathname, initialized, userProfile, router])
+
     if (isPublicRoute) {
         return <main className="min-h-screen bg-background">{children}</main>
     }

@@ -17,6 +17,7 @@ export default function MiGestionPage() {
     const [loading, setLoading] = useState(true)
     const [userProfile, setUserProfile] = useState<{ id: string, rol: RolUsuario, oficina_id: string } | null>(null)
     const [misDependencias, setMisDependencias] = useState<Dependencia[]>([])
+    const [myAssignedIds, setMyAssignedIds] = useState<string[]>([])
 
     // Data
     const [instrumentos, setInstrumentos] = useState<Instrumento[]>([])
@@ -49,6 +50,15 @@ export default function MiGestionPage() {
 
             if (profile && profile.oficina_id) {
                 setUserProfile(profile as any)
+
+                // Fetch assignments if equipo_planeacion
+                if (profile.rol === 'equipo_planeacion') {
+                    const { data: asignaciones } = await supabase
+                        .from('asignaciones_evaluador')
+                        .select('instrumento_id')
+                        .eq('perfil_id', user.id)
+                    setMyAssignedIds(asignaciones?.map(a => a.instrumento_id) ?? [])
+                }
 
                 // Fetch all context for mapping
                 const [procsRes, ofisRes, depsRes] = await Promise.all([
@@ -269,6 +279,7 @@ export default function MiGestionPage() {
                     seguimientoExistente={selectedItem.seguimiento}
                     userRole={userProfile.rol}
                     userId={userProfile.id}
+                    isAssigned={myAssignedIds.includes(selectedItem.instrumento.id)}
                     onSuccess={refreshData}
                 />
             )}

@@ -37,6 +37,8 @@ interface SeguimientoDialogProps {
     seguimientoExistente: Seguimiento | null
     userRole: RolUsuario
     userId: string
+    isAssigned?: boolean // Para validar responsabilidades del equipo de planeación
+    hasModuleEditPerm?: boolean // Permiso granular (por oficina o usuario)
     onSuccess: () => void
 }
 
@@ -50,6 +52,8 @@ export function SeguimientoDialog({
     seguimientoExistente,
     userRole,
     userId,
+    isAssigned = false,
+    hasModuleEditPerm = false,
     onSuccess,
 }: SeguimientoDialogProps) {
     const [loading, setLoading] = useState(false)
@@ -64,6 +68,37 @@ export function SeguimientoDialog({
         observacion_planeacion: '',
     })
     const supabase = createClient()
+
+    // ─── Control de Permisos ───────────────────────────────────────────────
+    const esSuperAdmin = userRole === 'super_admin'
+    const esEquipoPlaneacion = userRole === 'equipo_planeacion'
+    
+    const [esSandra, setEsSandra] = useState(false)
+
+    useEffect(() => {
+        const checkSandra = async () => {
+            if (!userId) return
+            const { data } = await supabase.from('perfiles').select('nombre_completo').eq('id', userId).single()
+            if (data?.nombre_completo?.toLowerCase().includes('sandra maritza machado')) {
+                setEsSandra(true)
+            }
+        }
+        checkSandra()
+    }, [userId, supabase])
+
+    // Lógica de Permisos: 
+    // 1. Super Admin puede todo.
+    // 2. Equipo de Planeación puede si está asignado (o si el usuario quiere "todo el control", por ahora habilitamos todo para ellos).
+    // 3. Sandra Maritza Machado puede editar específicamente "Plan de Acción Institucional" (aunque tenga rol jefe).
+    // 4. Cualquier usuario con permiso granular de edición para el módulo de seguimientos.
+    const tienePermisoEdicion = esSuperAdmin || 
+                               esEquipoPlaneacion || // "Todo el control" para el equipo de planeación
+                               hasModuleEditPerm ||  // Permiso otorgado en "Permisos por Oficina"
+                               (esSandra && instrumento.nombre === 'Plan de Acción Institucional')
+
+    const canEditOficina = tienePermisoEdicion
+    const canEditEvaluador = tienePermisoEdicion
+    const isReadOnly = !tienePermisoEdicion
 
     // Load existing data
     useEffect(() => {
@@ -92,10 +127,6 @@ export function SeguimientoDialog({
             })
         }
     }, [seguimientoExistente, open])
-
-    const canEditOficina = ['jefe_oficina', 'super_admin'].includes(userRole)
-    const canEditEvaluador = ['equipo_planeacion', 'super_admin'].includes(userRole)
-    const isReadOnly = !canEditOficina && !canEditEvaluador
 
     const handleSubmit = async () => {
         setLoading(true)

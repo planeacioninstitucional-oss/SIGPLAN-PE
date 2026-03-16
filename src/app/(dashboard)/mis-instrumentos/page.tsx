@@ -54,6 +54,7 @@ export default function MisInstrumentosPage() {
     const [userProfile, setUserProfile] = useState<{ id: string; rol: any; oficina_id: string | null } | null>(null)
     const [misDependenciaIds, setMisDependenciaIds] = useState<string[]>([])
     const [misDependencias, setMisDependencias] = useState<Dependencia[]>([])
+    const [myAssignedIds, setMyAssignedIds] = useState<string[]>([])
     const [userLoaded, setUserLoaded] = useState(false)
 
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -74,7 +75,17 @@ export default function MisInstrumentosPage() {
                 return
             }
             const { data } = await supabase.from('perfiles').select('*').eq('id', user.id).single()
-            if (data) setUserProfile(data)
+            if (data) {
+                setUserProfile(data)
+                // Fetch assignments if equipo_planeacion
+                if (data.rol === 'equipo_planeacion') {
+                    const { data: asignaciones } = await supabase
+                        .from('asignaciones_evaluador')
+                        .select('instrumento_id')
+                        .eq('perfil_id', user.id)
+                    setMyAssignedIds(asignaciones?.map(a => a.instrumento_id) ?? [])
+                }
+            }
             setUserLoaded(true)
         }
         fetchUser()
@@ -338,6 +349,7 @@ export default function MisInstrumentosPage() {
                     seguimientoExistente={selectedCell.seguimiento}
                     userRole={userProfile.rol}
                     userId={userProfile.id}
+                    isAssigned={myAssignedIds.includes(selectedCell.instrumento.id)}
                     onSuccess={fetchAllData}
                 />
             )}

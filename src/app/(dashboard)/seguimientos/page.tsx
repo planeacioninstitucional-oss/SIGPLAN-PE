@@ -21,6 +21,8 @@ import { SeguimientoDialog } from '@/components/seguimientos/SeguimientoDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { canViewInstrumento, getDependenciasParaInstrumento, formatDependenciaName } from '@/lib/responsabilidades'
+import * as XLSX from 'xlsx'
+import { usePermisos } from '@/lib/hooks/usePermisos'
 
 // ─── Period generation based on instrument frequency ───────────────────────
 function getPeriodsForFrecuencia(frecuencia: FrecuenciaInstrumento): string[] {
@@ -58,6 +60,8 @@ const SEMAFORO_STATS_CONFIG = [
 
 export default function SeguimientosPage() {
     const { vigenciaActual } = useVigenciaStore()
+    const { puedeEditar, esAdmin, esEquipoPlaneacion } = usePermisos()
+    const hasModuleEditPerm = puedeEditar('seguimientos')
     const [loading, setLoading] = useState(false)
 
     // Data
@@ -215,6 +219,45 @@ export default function SeguimientosPage() {
 
     const canInteract = userProfile && ['super_admin', 'equipo_planeacion', 'jefe_oficina'].includes(userProfile.rol)
 
+    const handleExport = () => {
+        if (!currentInstrumento || visibleDependencias.length === 0) {
+            toast.error('No hay datos para exportar')
+            return
+        }
+
+        const data = visibleDependencias.map(dep => {
+            const row: any = {
+                'ID': dep.id,
+                'DEPENDENCIA / OFICINA': formatDependenciaName(dep.nombre)
+            }
+            
+            periods.forEach(p => {
+                const seg = getSeguimiento(dep.id, p)
+                const label = p.toUpperCase()
+                row[label] = seg ? seg.estado_semaforo.toUpperCase() : 'SIN REPORTE'
+                row[`% ${label}`] = seg ? (seg.porcentaje_fisico || 0) : 0
+            })
+            return row
+        })
+
+        const ws = XLSX.utils.json_to_sheet(data)
+        
+        // Add column widths
+        const wscols = [
+            { wch: 10 }, // ID
+            { wch: 40 }, // Dependencia
+            ...periods.flatMap(() => [{ wch: 15 }, { wch: 10 }])
+        ]
+        ws['!cols'] = wscols
+
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, 'Detalle Seguimiento')
+
+        const filename = `${currentInstrumento?.nombre?.substring(0, 30)} - ${vigenciaActual?.anio ?? ''}.xlsx`
+        XLSX.writeFile(wb, filename)
+        toast.success(`Exportado: ${currentInstrumento?.nombre ?? 'Informe'}`)
+    }
+
     if (!vigenciaActual) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center gap-4">
@@ -238,7 +281,12 @@ export default function SeguimientosPage() {
                         Instrumentos de Planeación — Vigencia <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span>
                     </p>
                 </div>
-                <Button variant="outline" size="sm" className="hidden md:flex border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800">
+                <Button 
+                    onClick={handleExport}
+                    variant="outline" 
+                    size="sm" 
+                    className="hidden md:flex border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                >
                     <Download className="w-4 h-4 mr-2" />
                     Exportar Informe
                 </Button>
@@ -409,11 +457,13 @@ export default function SeguimientosPage() {
                     onOpenChange={setDialogOpen}
                     vigenciaId={vigenciaActual.id}
                     dependencia={selectedCell.dependencia}
-                    instrumento={currentInstrumento}
+                    instrumento={currentInstrumento!}
                     periodo={selectedCell.periodo}
                     seguimientoExistente={selectedCell.seguimiento}
                     userRole={userProfile.rol}
                     userId={userProfile.id}
+                    isAssigned={myAssignedIds.includes(currentInstrumento?.id ?? '')}
+                    hasModuleEditPerm={hasModuleEditPerm}
                     onSuccess={fetchSeguimientos}
                 />
             )}

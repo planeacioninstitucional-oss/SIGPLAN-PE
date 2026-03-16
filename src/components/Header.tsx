@@ -36,6 +36,13 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [isSearchOpen, setIsSearchOpen] = useState(false)
 
+    const ADMINS_CON_ACCESO = [
+        'jarol mauricio santos luna',
+        'manuela lucia gomez guacanez'
+    ]
+    const nombreCompleto = userProfile?.nombre_completo?.toLowerCase().trim() || ''
+    const esAdminAutorizado = ADMINS_CON_ACCESO.includes(nombreCompleto)
+
     const SEARCH_ROUTES = [
         { name: 'Mesa de Control / Seguimientos', href: '/seguimientos' },
         { name: 'Mi Gestión', href: '/mi-gestion' },
@@ -45,8 +52,10 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
         { name: 'Plan Acción Municipal', href: '/plan-accion-municipal' },
         { name: 'Alistamiento', href: '/alistamiento' },
         { name: 'Reportes Gerenciales', href: '/reportes' },
-        { name: 'Administración de Usuarios', href: '/admin/usuarios' },
-        { name: 'Configuración', href: '/admin/configuracion' },
+        ...(esAdminAutorizado ? [
+            { name: 'Administración de Usuarios', href: '/admin/usuarios' },
+            { name: 'Configuración', href: '/admin/configuracion' },
+        ] : []),
     ]
 
     const filteredSearchResults = SEARCH_ROUTES.filter(route =>
@@ -195,13 +204,15 @@ export function Header({ toggleSidebar, userProfile }: HeaderProps) {
                                 <User className="w-4 h-4" />
                                 Mi Perfil
                             </button>
-                            <button 
-                                onClick={() => { setShowUserMenu(false); router.push('/admin/configuracion') }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors text-left"
-                            >
-                                <Settings className="w-4 h-4" />
-                                Configuración
-                            </button>
+                            {esAdminAutorizado && (
+                                <button 
+                                    onClick={() => { setShowUserMenu(false); router.push('/admin/configuracion') }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors text-left"
+                                >
+                                    <Settings className="w-4 h-4" />
+                                    Configuración
+                                </button>
+                            )}
 
                             <div className="h-px bg-gray-100 dark:bg-white/5 my-1" />
 

@@ -138,13 +138,13 @@ const MENU_ITEMS: MenuSection[] = [
                 name: 'Permisos por Oficina',
                 icon: Shield,
                 href: '/admin/permisos',
-                roles: ['super_admin', 'equipo_planeacion'],
+                roles: ['super_admin'],
             },
             {
                 name: 'Importar Excel',
                 icon: FileSpreadsheet,
                 href: '/admin/importar',
-                roles: ['super_admin', 'equipo_planeacion', 'jefe_oficina'],
+                roles: ['super_admin'],
                 moduloPermiso: 'importar',
             },
             {
@@ -157,23 +157,39 @@ const MENU_ITEMS: MenuSection[] = [
     },
 ]
 
+const ADMINS_CON_ACCESO = [
+    'jarol mauricio santos luna',
+    'manuela lucia gomez guacanez'
+]
+
 export function Sidebar({ isOpen, toggleSidebar, userProfile }: SidebarProps) {
     const pathname = usePathname()
     const { puedeVer, loading: permisosLoading } = usePermisos()
 
     const userRole = userProfile?.rol ?? 'funcionario'
     const oficinaNombre = userProfile?.oficinas?.nombre || ''
+    const nombreCompleto = userProfile?.nombre_completo?.toLowerCase().trim() || ''
+    const esAdminAutorizado = ADMINS_CON_ACCESO.includes(nombreCompleto)
 
     const filterItems = (section: MenuSection) => {
         // De-duplicate by href: prefer item without moduloPermiso for admin/equipo
         const seen = new Set<string>()
         const filtered = section.items.filter(item => {
-            // Role check
-            if (item.roles && !item.roles.includes(userRole as RolUsuario)) return false
+            // Restriction for Administración category (only Jarol and Manuela)
+            if (section.category === 'Administración' && !esAdminAutorizado) return false
+
+            // Role check (bypass for authorized admins if in Administración section)
+            if (item.roles && !item.roles.includes(userRole as RolUsuario)) {
+                if (section.category === 'Administración' && esAdminAutorizado) {
+                    // allow
+                } else {
+                    return false
+                }
+            }
 
             // Permission check (only for items with moduloPermiso and non-admin roles)
             if (item.moduloPermiso) {
-                if (!puedeVer(item.moduloPermiso)) return false
+                if (!puedeVer(item.moduloPermiso) && !esAdminAutorizado) return false
             }
 
             // Hide Mi Gestión if no office assigned
