@@ -144,8 +144,12 @@ export function SeguimientoDialog({
 
             // Oficina fields
             if (canEditOficina) {
-                payload.porcentaje_fisico = formData.porcentaje_fisico ? parseFloat(formData.porcentaje_fisico) : null
-                payload.porcentaje_financiero = formData.porcentaje_financiero ? parseFloat(formData.porcentaje_financiero) : null
+                // Validación de porcentajes (0-100) para evitar error de constraint en base de datos
+                const pFisico = formData.porcentaje_fisico ? parseFloat(formData.porcentaje_fisico) : null
+                const pFinanciero = formData.porcentaje_financiero ? parseFloat(formData.porcentaje_financiero) : null
+                
+                payload.porcentaje_fisico = pFisico !== null ? Math.min(100, Math.max(0, pFisico)) : null
+                payload.porcentaje_financiero = pFinanciero !== null ? Math.min(100, Math.max(0, pFinanciero)) : null
                 payload.hubo_materializacion_riesgo = formData.hubo_materializacion_riesgo
                 payload.url_saro = formData.url_saro || null
                 payload.subido_por = userId
