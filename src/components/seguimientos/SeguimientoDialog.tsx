@@ -353,7 +353,7 @@ export function SeguimientoDialog({
                             <div className="grid gap-2">
                                 <Label>Semáforo de Cumplimiento</Label>
                                 <div className="flex gap-4 items-center">
-                                    {['verde', 'amarillo', 'rojo'].map((color) => (
+                                    {['verde', 'amarillo', 'rojo', 'gris'].map((color) => (
                                         <div
                                             key={color}
                                             onClick={() => canEditEvaluador && setFormData({ ...formData, estado_semaforo: color as any })}
