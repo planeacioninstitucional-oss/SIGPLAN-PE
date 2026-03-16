@@ -67,8 +67,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     toggleSidebar={() => setIsOpen(!isOpen)}
                     userProfile={userProfile}
                 />
-                <main className="flex-1 p-6 overflow-x-hidden">
-                    <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <main className="flex-1 p-4 md:p-8 overflow-x-hidden">
+                    <div className="max-w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {children}
                     </div>
                 </main>

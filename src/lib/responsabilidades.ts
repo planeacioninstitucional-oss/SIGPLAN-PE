@@ -196,7 +196,7 @@ export function formatDependenciaName(name: string | null | undefined): string {
     if (nameUpper.includes('ESQUEMAS EMPRESARIALES')) return 'Operación de esquemas empresariales';
     if (nameUpper.includes('PARQUES Y ZONAS VERDES')) return 'Parques y Zonas Verdes';
     if (nameUpper.includes('PLAZAS DE MERCADO')) return 'Plazas de Mercado';
-    if (nameUpper.includes('RECURSOS FÍSICOS') || nameUpper.includes('RECURSOS FISICOS')) return 'Gestión de recursos fisicos';
+    if (nameUpper.includes('RECURSOS FÍSICOS') || nameUpper.includes('RECURSOS FISICOS') || nameUpper.includes('RECURSOSS')) return 'Gestión de recursos fisicos';
     if (nameUpper.includes('RELLENO SANITARIO')) return 'Relleno Sanitario';
 
     return name;

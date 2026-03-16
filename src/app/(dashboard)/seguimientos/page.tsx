@@ -364,15 +364,15 @@ export default function SeguimientosPage() {
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                    <div className="relative overflow-hidden rounded-b-xl border-t border-gray-200 dark:border-slate-800">
+                <CardContent className="p-0 pb-10">
+                    <div className="relative overflow-visible rounded-b-xl border-t border-gray-200 dark:border-slate-800">
                         {loading && (
                             <div className="absolute inset-0 bg-white/60 dark:bg-slate-950/60 z-20 flex items-center justify-center backdrop-blur-sm">
                                 <Loader2 className="w-8 h-8 animate-spin text-blue-500 dark:text-blue-400" />
                             </div>
                         )}
 
-                        <Table wrapperClassName="max-h-[calc(100vh-320px)] scrollbar-thin scrollbar-thumb-slate-700">
+                        <Table wrapperClassName="scrollbar-thin scrollbar-thumb-slate-700 overflow-y-auto">
                             <TableHeader className="sticky top-0 z-10 bg-muted/95 dark:bg-slate-900/95 backdrop-blur-sm">
                                 <TableRow className="border-border dark:border-slate-800 hover:bg-transparent">
                                     <TableHead className="w-[280px] min-w-[220px] sticky left-0 bg-muted/95 dark:bg-slate-900/95 z-20 border-r border-border dark:border-slate-800 text-foreground dark:text-slate-300 font-bold py-4 pl-5">
