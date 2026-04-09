@@ -10,9 +10,10 @@ import { ReportProcessData } from './PendingSignaturesAlert'
 interface ExcelExportButtonProps {
     reportData: ReportProcessData[]
     className?: string
+    year?: string | number
 }
 
-export function ExcelExportButton({ reportData, className = "" }: ExcelExportButtonProps) {
+export function ExcelExportButton({ reportData, className = "", year = new Date().getFullYear() }: ExcelExportButtonProps) {
     const [isExporting, setIsExporting] = useState(false)
 
     // Lista maestra de procesos en el orden fijo deseado
@@ -48,14 +49,14 @@ export function ExcelExportButton({ reportData, className = "" }: ExcelExportBut
             workbook.creator = 'Planeación INFIBAGUÉ'
             workbook.created = new Date()
 
-            const sheet = workbook.addWorksheet('Reporte Procesos 2025', {
+            const sheet = workbook.addWorksheet(`Reporte Procesos ${year}`, {
                 pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, pxPerIn: 96 }
             })
 
             // 2. Encabezado e Imagen Institucional
             sheet.mergeCells('A1:P2')
             const headerCell = sheet.getCell('A1')
-            headerCell.value = 'INSTITUTO DE FINANCIAMIENTO, PROMOCIÓN Y DESARROLLO DE IBAGUÉ - INFIBAGUÉ\nRELACIÓN ENTREGA PLANES DE ACCIÓN 2025'
+            headerCell.value = `INSTITUTO DE FINANCIAMIENTO, PROMOCIÓN Y DESARROLLO DE IBAGUÉ - INFIBAGUÉ\nRELACIÓN ENTREGA PLANES DE ACCIÓN ${year}`
             headerCell.font = { name: 'Arial', size: 14, bold: true }
             headerCell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
             

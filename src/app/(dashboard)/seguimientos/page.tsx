@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 import { useVigenciaStore } from '@/stores/vigenciaStore'
 import {
     Table,
@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Loader2, Download, BarChart3, CheckCircle2, XCircle, AlertCircle, Circle } from 'lucide-react'
+import { Loader2, Download, BarChart3, CheckCircle2, XCircle, AlertCircle, Circle, ExternalLink } from 'lucide-react'
 import type { Dependencia, Instrumento, Seguimiento, RolUsuario, FrecuenciaInstrumento } from '@/types/database'
 import { SemaforoCell } from '@/components/seguimientos/SemaforoCell'
 import { SeguimientoDialog } from '@/components/seguimientos/SeguimientoDialog'
@@ -23,6 +23,8 @@ import { cn } from '@/lib/utils'
 import { canViewInstrumento, getDependenciasParaInstrumento, formatDependenciaName } from '@/lib/responsabilidades'
 import * as XLSX from 'xlsx'
 import { usePermisos } from '@/lib/hooks/usePermisos'
+import { ExcelExportButton } from '@/components/seguimientos/ExcelExportButton'
+import { PendingSignaturesAlert, ReportProcessData } from '@/components/seguimientos/PendingSignaturesAlert'
 
 // ─── Period generation based on instrument frequency ───────────────────────
 function getPeriodsForFrecuencia(frecuencia: FrecuenciaInstrumento): string[] {
@@ -258,6 +260,31 @@ export default function SeguimientosPage() {
         toast.success(`Exportado: ${currentInstrumento?.nombre ?? 'Informe'}`)
     }
 
+    // ─── Preparar Data Dinámica para Exportador Institucional (Excel Avanzado) ───
+    const isPlanAccion = currentInstrumento?.nombre?.toUpperCase().includes('PLAN DE ACCIÓN INSTITUCIONAL') || currentInstrumento?.nombre?.toUpperCase().includes('PLAN DE ACCION INSTITUCIONAL');
+
+    const reportDataForExport = useMemo<ReportProcessData[]>(() => {
+        if (!isPlanAccion || visibleDependencias.length === 0) return [];
+        return visibleDependencias.map(dep => {
+            const segObj: Record<string, string> = {};
+            periods.forEach(p => {
+                const seg = getSeguimiento(dep.id, p);
+                const key = p.toLowerCase().split(' ')[0]; // E.g., 'enero', 'febrero', etc.
+                const estado = seg ? seg.estado_semaforo : 'gris';
+                // Usamos 'Pendiente Firma' para los que están en amarillo, según el estándar del panel avanzado.
+                segObj[key] = estado === 'verde' ? '√' : estado === 'rojo' ? 'X' : estado === 'amarillo' ? 'Pendiente Firma' : '';
+            });
+
+            return {
+                concepto: currentInstrumento.nombre,
+                proceso: formatDependenciaName(dep.nombre),
+                seguimiento: segObj,
+                avanceFisico: 0, // Como la web no visualiza este field para PAI a este nivel, enviamos un default
+                avanceInversion: 0
+            };
+        });
+    }, [isPlanAccion, visibleDependencias, seguimientosMap, periods, currentInstrumento]);
+
     if (!vigenciaActual) {
         return (
             <div className="flex flex-col items-center justify-center h-[60vh] text-center gap-4">
@@ -281,15 +308,34 @@ export default function SeguimientosPage() {
                         Instrumentos de Planeación — Vigencia <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span>
                     </p>
                 </div>
-                <Button 
-                    onClick={handleExport}
-                    variant="outline" 
-                    size="sm" 
-                    className="hidden md:flex border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-                >
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar Informe
-                </Button>
+                <div className="flex gap-2 items-center">
+                    {/* Si es Plan de Acción Institucional, renderizar plugin de reportes avanzado */}
+                    {isPlanAccion ? (
+                        <>
+                            <Button 
+                                variant="ghost" 
+                                asChild 
+                                className="hidden md:flex text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 underline-offset-4 hover:underline"
+                            >
+                                <Link href="/export-demo">
+                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    Ver Export Demo
+                                </Link>
+                            </Button>
+                            <ExcelExportButton reportData={reportDataForExport} year={vigenciaActual.anio} className="hidden md:flex" />
+                        </>
+                    ) : (
+                        <Button 
+                            onClick={handleExport}
+                            variant="outline" 
+                            size="sm" 
+                            className="hidden md:flex border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                        >
+                            <Download className="w-4 h-4 mr-2" />
+                            Exportar Informe
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* Stats Row */}
@@ -343,6 +389,11 @@ export default function SeguimientosPage() {
                     })}
                 </div>
             </div>
+
+            {/* Dashboard Card de Firmas Pendientes (Solo si es PAI) */}
+            {isPlanAccion && (
+                <PendingSignaturesAlert reportData={reportDataForExport} />
+            )}
 
             {/* Main Table */}
             <Card className="card-glass border-gray-200 dark:border-slate-800">
