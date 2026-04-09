@@ -120,8 +120,10 @@ export default function ReportesPage() {
             const data = await res.json()
             if (data.error) throw new Error(data.error)
             setAiSummary(data.summary)
-        } catch (error) {
-            toast.error('Error generando resumen', { description: 'Verifique configuración de API Key' })
+        } catch (error: any) {
+            toast.error('Error generando resumen', { 
+                description: error.message || 'Verifique configuración de API Key' 
+            })
         } finally {
             setLoadingAI(false)
         }
