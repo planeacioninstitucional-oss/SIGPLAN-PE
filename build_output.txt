@@ -1,0 +1,59 @@
+﻿   Ôû▓ Next.js 14.1.0
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully
+   Linting and checking validity of types ...
+npx : Failed to compile.
+En línea: 1 Carácter: 1
++ npx next build 2>&1 | 
+Out-File -FilePath 
+build_output.txt -Encoding 
+u ...
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo         
+     : NotSpecified: (Fai  
+  led to compile.:String   
+ ) [], RemoteException
+    + FullyQualifiedErrorI 
+   d : NativeCommandError
+ 
+
+./src/app/(dashboard)/repor
+tes/page.tsx:468:79
+Type error: 'percent' is 
+possibly 'undefined'.
+
+[0m [90m 466 |[39m      
+                           
+    paddingAngle[33m=[39m
+{[35m4[39m}[0m
+[0m [90m 467 |[39m      
+                           
+    dataKey[33m=[39m[32m
+"value"[39m[0m
+[0m[31m[1m>[22m[39m[9
+0m 468 |[39m              
+                       
+label[33m=[39m{({ 
+name[33m,[39m percent }) 
+[33m=>[39m [32m`${name} 
+${(percent * 100).toFixed(0
+)}%`[39m}[0m
+[0m [90m     |[39m      
+                           
+                           
+                   
+[31m[1m^[22m[39m[0m
+[0m [90m 469 |[39m      
+                           
+    labelLine[33m=[39m{[
+36mfalse[39m}[0m
+[0m [90m 470 |[39m      
+                           
+[33m>[39m[0m
+[0m [90m 471 |[39m      
+                           
+    {pieData[33m.[39mmap(
+(entry[33m,[39m index) 
+[33m=>[39m ([0m

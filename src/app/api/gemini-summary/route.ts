@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
 
         // Fetch data for context
         const { data: seguimientos } = await supabase
@@ -40,22 +40,25 @@ export async function POST(req: Request) {
 
         // Construct prompt
         const prompt = `
-      Actúa como un experto consultor de planeación estratégica para una entidad pública (INFIBAGUÉ).
-      Analiza los siguientes seguimientos recientes y genera un resumen ejecutivo corto (máximo 3 párrafos).
+      Actúa como un experto consultor de planeación estratégica para una entidad pública.
+      Analiza los siguientes seguimientos recientes y genera un análisis ejecutivo integral.
       
-      Destaca:
-      1. Logros principales (metas cumplidas o avances significativos).
-      2. Alertas críticas (retrasos, bajo cumplimiento financiero/físico).
-      3. Recomendaciones estratégicas para la gerencia.
+      Por favor, formatea tu respuesta en **Markdown** incluyendo:
+      
+      1.  **Resumen Ejecutivo (1 párrafo):** Una visión global del estado actual.
+      2.  **Visualización de Datos:** Crea una tabla en markdown resumiendo el estado de los instrumentos por semáforo (Verdes, Amarillos, Rojos).
+      3.  **Logros Principales:** Destaca las metas cumplidas o avances físicos/financieros más significativos. Usa listas (bullet points).
+      4.  **Alertas Críticas:** Identifica claramente retrasos o bajo cumplimiento (estado rojo o amarillo).
+      5.  **Recomendaciones Estratégicas:** Sugerencias accionables para la gerencia.
 
-      Ignora seguimientos en gris si no tienen datos de avance.
+      Ignora seguimientos en gris si no tienen datos de avance. Sé profesional, conciso y estructurado.
       
-      Datos:
+      Datos de Seguimientos:
       ${JSON.stringify(seguimientos.map(s => ({
-            dep: s.dependencias?.nombre,
-            instr: s.instrumentos?.nombre,
-            avance_fisico: s.porcentaje_fisico,
-            avance_financiero: s.porcentaje_financiero,
+            dependencia: s.dependencias?.nombre,
+            instrumento: s.instrumentos?.nombre,
+            avance_fisico: typeof s.porcentaje_fisico === 'number' ? s.porcentaje_fisico.toFixed(1) + '%' : 'N/A',
+            avance_financiero: typeof s.porcentaje_financiero === 'number' ? s.porcentaje_financiero.toFixed(1) + '%' : 'N/A',
             semaforo: s.estado_semaforo
         })))}
     `
@@ -68,10 +71,11 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('Gemini API Error:', error)
-        const errorMessage = error.message?.includes('API key') 
-            ? 'La API Key de Google no es válida o ha expirado.' 
-            : 'Error al generar el resumen con IA. Por favor, reintente en unos momentos.';
+        
+        let message = 'Error al generar el resumen con IA.';
+        if (error.message?.includes('429')) message = 'Se ha alcanzado el límite de peticiones. Por favor, espere 30 segundos y reintente.';
+        if (error.message?.includes('API key')) message = 'La API Key no es válida o ha expirado.';
             
-        return NextResponse.json({ error: errorMessage }, { status: 500 })
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }
