@@ -50,7 +50,7 @@ export function ExcelExportButton({ reportData, className = "", year = new Date(
             workbook.created = new Date()
 
             const sheet = workbook.addWorksheet(`Reporte Procesos ${year}`, {
-                pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, pxPerIn: 96 }
+                pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true }
             })
 
             // 2. Encabezado e Imagen Institucional
