@@ -72,6 +72,7 @@ export function SeguimientoDialog({
     // ─── Control de Permisos ───────────────────────────────────────────────
     const esSuperAdmin = userRole === 'super_admin'
     const esEquipoPlaneacion = userRole === 'equipo_planeacion'
+    const [esSandra, setEsSandra] = useState(false)
     const [currentUserName, setCurrentUserName] = useState<string>('')
 
     useEffect(() => {
