@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         }
 
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
         // Fetch data for context
         const { data: seguimientos } = await supabase
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
             .limit(50) // Limit context size
 
         if (!seguimientos || seguimientos.length === 0) {
-            return NextResponse.json({ summary: "No hay suficientes datos para generar un reporte." })
+            return NextResponse.json({ summary: "No hay suficientes datos registrados para generar un análisis estadístico en este momento." })
         }
 
         // Construct prompt
@@ -48,6 +48,8 @@ export async function POST(req: Request) {
       2. Alertas críticas (retrasos, bajo cumplimiento financiero/físico).
       3. Recomendaciones estratégicas para la gerencia.
 
+      Ignora seguimientos en gris si no tienen datos de avance.
+      
       Datos:
       ${JSON.stringify(seguimientos.map(s => ({
             dep: s.dependencias?.nombre,
@@ -66,6 +68,10 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('Gemini API Error:', error)
-        return NextResponse.json({ error: 'Error generating summary' }, { status: 500 })
+        const errorMessage = error.message?.includes('API key') 
+            ? 'La API Key de Google no es válida o ha expirado.' 
+            : 'Error al generar el resumen con IA. Por favor, reintente en unos momentos.';
+            
+        return NextResponse.json({ error: errorMessage }, { status: 500 })
     }
 }
