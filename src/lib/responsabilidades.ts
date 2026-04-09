@@ -19,7 +19,7 @@ export const RESPONSABILIDADES_EQUIPO: Record<string, string[]> = {
         'Gestion proyectos de promoción y desarrollo',
         'Gestion de operaciones financieras'
     ],
-    'SANDRA MARITZA MACHADO ROJAS': ['Plan de accion institucional']
+    'SANDRA MARITZA MACHADO ROJAS': ['Plan de Acción Institucional']
 };
 
 export function hasSidebarAccess(itemName: string, nombre_completo: string | null | undefined, rol: string, oficinaNombre?: string | null): boolean {
@@ -126,8 +126,7 @@ export function getDependenciasParaInstrumento(instrumentoNombre: string, todasD
         'Gestion de operaciones financieras', 'Gestión de recursos fisicos', 'Gestión del SIG',
         'Gestión Documental', 'Gestión Estratégica', 'Gestión Financiera', 'Gestión Humana',
         'Gestión Integral de Riesgos', 'Gestión Jurídica', 'Gestión Tecnológica',
-        'Gestión del conocimiento y la innovación', 'Operación de esquemas empresariales',
-        'Gestion proyectos de promoción y desarrollo'
+        'Operación de esquemas empresariales', 'Gestion proyectos de promoción y desarrollo'
     ]
 
     const pai21 = [
@@ -136,7 +135,7 @@ export function getDependenciasParaInstrumento(instrumentoNombre: string, todasD
         'Relleno Sanitario', 'Parques y Zonas Verdes', 'Plazas de Mercado', 'Alumbrado Publico',
         'Gestión de recursos fisicos', 'Gestión del SIG', 'Gestión Documental', 'Gestión Estratégica',
         'Gestión Financiera', 'Gestión Humana', 'Gestión Integral de Riesgos', 'Gestión Jurídica',
-        'Gestión Tecnológica', 'Gestión del conocimiento y la innovación', 'Gestion proyectos de promoción y desarrollo'
+        'Gestión Tecnológica', 'Gestion de operaciones financieras', 'Gestion proyectos de promoción y desarrollo'
     ]
 
     if (isPlanAccion) {

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { Loader2, ExternalLink } from 'lucide-react'
+import { Loader2, ExternalLink, History } from 'lucide-react'
 import type { Seguimiento, Instrumento, Dependencia, RolUsuario } from '@/types/database'
 import { SemaforoCell } from './SemaforoCell'
 import { createNotification, notifyUsersByRole } from '@/lib/notifications'
@@ -72,18 +72,20 @@ export function SeguimientoDialog({
     // ─── Control de Permisos ───────────────────────────────────────────────
     const esSuperAdmin = userRole === 'super_admin'
     const esEquipoPlaneacion = userRole === 'equipo_planeacion'
-    
-    const [esSandra, setEsSandra] = useState(false)
+    const [currentUserName, setCurrentUserName] = useState<string>('')
 
     useEffect(() => {
-        const checkSandra = async () => {
+        const fetchUserName = async () => {
             if (!userId) return
             const { data } = await supabase.from('perfiles').select('nombre_completo').eq('id', userId).single()
-            if (data?.nombre_completo?.toLowerCase().includes('sandra maritza machado')) {
-                setEsSandra(true)
+            if (data?.nombre_completo) {
+                setCurrentUserName(data.nombre_completo)
+                if (data.nombre_completo.toLowerCase().includes('sandra maritza machado')) {
+                    setEsSandra(true)
+                }
             }
         }
-        checkSandra()
+        fetchUserName()
     }, [userId, supabase])
 
     // Lógica de Permisos: 
@@ -92,9 +94,9 @@ export function SeguimientoDialog({
     // 3. Sandra Maritza Machado puede editar específicamente "Plan de Acción Institucional" (aunque tenga rol jefe).
     // 4. Cualquier usuario con permiso granular de edición para el módulo de seguimientos.
     const tienePermisoEdicion = esSuperAdmin || 
-                               esEquipoPlaneacion || // "Todo el control" para el equipo de planeación
-                               hasModuleEditPerm ||  // Permiso otorgado en "Permisos por Oficina"
-                               (esSandra && instrumento.nombre === 'Plan de Acción Institucional')
+                                esEquipoPlaneacion || // "Todo el control" para el equipo de planeación
+                                hasModuleEditPerm ||  // Permiso otorgado en "Permisos por Oficina"
+                                (esSandra && instrumento.nombre === 'Plan de Acción Institucional')
 
     const canEditOficina = tienePermisoEdicion
     const canEditEvaluador = tienePermisoEdicion
@@ -165,6 +167,29 @@ export function SeguimientoDialog({
                 payload.estado_semaforo = formData.estado_semaforo
                 payload.observacion_planeacion = formData.observacion_planeacion || null
                 payload.evaluado_por = userId
+
+                // --- Historial de Ediciones (Auditoria) ---
+                if (instrumento.nombre === 'Plan de Acción Institucional' && currentUserName) {
+                    const today = new Date().toLocaleDateString('es-CO', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric' 
+                    });
+                    const auditEntry = { mensaje: `${currentUserName.toLowerCase()} edito ${today}` };
+                    
+                    const existingHistory = Array.isArray(seguimientoExistente?.historial_ediciones) 
+                        ? (seguimientoExistente.historial_ediciones as any[])
+                        : [];
+                    
+                    // Simple check: save if last entry is different OR from different user/date
+                    const isDuplicate = existingHistory.some(h => h.mensaje === auditEntry.mensaje);
+                    
+                    if (!isDuplicate) {
+                        payload.historial_ediciones = [...existingHistory, auditEntry];
+                    } else {
+                        payload.historial_ediciones = existingHistory;
+                    }
+                }
             }
 
             const { error } = await supabase
@@ -379,6 +404,24 @@ export function SeguimientoDialog({
                                     placeholder="Retroalimentación..."
                                     className="border-purple-500/20"
                                 />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Historial de Ediciones (Auditoria) */}
+                    {instrumento.nombre === 'Plan de Acción Institucional' && (seguimientoExistente?.historial_ediciones?.length || 0) > 0 && (
+                        <div className="space-y-3 p-4 rounded-lg bg-slate-500/5 border border-slate-500/10">
+                            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <History className="w-3 h-3" />
+                                Historial de Ediciones (Evidencia)
+                            </h3>
+                            <div className="space-y-1.5">
+                                {(seguimientoExistente?.historial_ediciones as any[])?.map((log, idx) => (
+                                    <div key={idx} className="text-[11px] text-muted-foreground flex items-center gap-2 italic">
+                                        <div className="w-1 h-1 bg-slate-400 rounded-full" />
+                                        {log.mensaje}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}

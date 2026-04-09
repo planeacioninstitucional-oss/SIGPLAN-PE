@@ -127,6 +127,7 @@ export interface Seguimiento {
     observacion_planeacion: string | null
     subido_por: string | null
     evaluado_por: string | null
+    historial_ediciones: any[] | null
     updated_at: string
     created_at: string
     // Joined
