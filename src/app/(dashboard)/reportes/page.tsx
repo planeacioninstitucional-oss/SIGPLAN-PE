@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useVigenciaStore } from '@/stores/vigenciaStore'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -44,7 +44,7 @@ interface DependencyStats {
 
 // ─── Componente auxiliar: KPI Card ───────────────────────────────────────────
 function KpiCard({ title, value, subtitle, icon: Icon, color = 'text-slate-900 dark:text-white' }: {
-    title: string, value: string | number, subtitle: string, icon: any, color?: string
+    title: string, value: string | number, subtitle: string, icon: React.ElementType, color?: string
 }) {
     return (
         <Card className="card-glass border-border bg-white/50 dark:bg-slate-900/10 hover:border-primary/30 transition-all duration-300 shadow-sm">
@@ -74,12 +74,12 @@ function ProgressBar({ value, max = 100, color = '#22c55e' }: { value: number, m
 }
 
 // ─── Custom Tooltip para gráficos ────────────────────────────────────────────
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
     if (!active || !payload) return null
     return (
         <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 shadow-xl">
             <p className="text-sm font-bold text-slate-900 dark:text-white mb-1">{label}</p>
-            {payload.map((entry: any, i: number) => (
+            {payload?.map((entry: any, i: number) => (
                 <p key={i} className="text-xs font-medium" style={{ color: entry.fill || entry.color }}>
                     {entry.name}: <span className="font-bold">{entry.value}</span>
                 </p>

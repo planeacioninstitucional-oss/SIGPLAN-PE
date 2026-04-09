@@ -5,7 +5,7 @@ import * as ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 import { FileSpreadsheet, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ReportProcessData } from './PendingSignaturesAlert'
+import type { ReportProcessData } from './PendingSignaturesAlert'
 
 interface ExcelExportButtonProps {
     reportData: ReportProcessData[]
@@ -131,6 +131,8 @@ export function ExcelExportButton({ reportData, className = "", year = new Date(
             for (let i = 3; i <= 14; i++) sheet.getColumn(i).width = 12
             sheet.getColumn(15).width = 16
             sheet.getColumn(16).width = 18
+            sheet.getColumn(15).numFmt = '0%'
+            sheet.getColumn(16).numFmt = '0%'
 
             // 5. Filas de Procesos
             let currentRow = 5
@@ -142,14 +144,15 @@ export function ExcelExportButton({ reportData, className = "", year = new Date(
                 const procData = reportData.find(d => 
                     d.proceso.trim().toUpperCase() === nombreProceso.toUpperCase()
                 )
-
-                const rowBuffer: any[] = [procData ? procData.concepto : 'PLAN DE ACCIÓN', nombreProceso]
+                
+                // Buffer de fila con tipos específicos para evitar 'any'
+                const rowBuffer: ExcelJS.CellValue[] = [procData ? procData.concepto : 'PLAN DE ACCIÓN', nombreProceso]
                 
                 let hasPendiente = false
 
                 for (const m of mesesMap) {
                     const status = procData ? (procData.seguimiento[m] || '') : ''
-                    rowBuffer.push(status)
+                    rowBuffer.push(status as ExcelJS.CellValue)
                     if (status.includes('Pendiente Firma') || status.includes('Firma')) hasPendiente = true
                 }
                 

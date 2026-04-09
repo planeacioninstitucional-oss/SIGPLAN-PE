@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const supabase = createClient()
 
     // Public routes that don't need the shell
-    const isPublicRoute = ['/login', '/auth/callback', '/register', '/forgot-password'].includes(pathname)
+    const isPublicRoute = ['/', '/login', '/auth/callback', '/register', '/forgot-password'].includes(pathname)
 
     useEffect(() => {
         if (!isPublicRoute && !initialized) {

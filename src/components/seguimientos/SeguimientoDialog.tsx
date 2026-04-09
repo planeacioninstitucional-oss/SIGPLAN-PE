@@ -308,9 +308,14 @@ export function SeguimientoDialog({
                                         min="0"
                                         max="100"
                                         value={formData.porcentaje_fisico}
-                                        onChange={(e) => setFormData({ ...formData, porcentaje_fisico: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            if (isNaN(val)) setFormData({ ...formData, porcentaje_fisico: '' });
+                                            else setFormData({ ...formData, porcentaje_fisico: Math.min(100, Math.max(0, val)).toString() });
+                                        }}
                                         disabled={!canEditOficina}
                                     />
+                                    <p className="text-[10px] text-muted-foreground">Escala 0-100%</p>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="financiero">% Avance Financiero</Label>
@@ -320,9 +325,14 @@ export function SeguimientoDialog({
                                         min="0"
                                         max="100"
                                         value={formData.porcentaje_financiero}
-                                        onChange={(e) => setFormData({ ...formData, porcentaje_financiero: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            if (isNaN(val)) setFormData({ ...formData, porcentaje_financiero: '' });
+                                            else setFormData({ ...formData, porcentaje_financiero: Math.min(100, Math.max(0, val)).toString() });
+                                        }}
                                         disabled={!canEditOficina}
                                     />
+                                    <p className="text-[10px] text-muted-foreground">Escala 0-100%</p>
                                 </div>
                             </div>
                         )}

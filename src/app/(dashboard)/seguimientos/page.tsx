@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useVigenciaStore } from '@/stores/vigenciaStore'
@@ -25,7 +25,8 @@ import { canViewInstrumento, getDependenciasParaInstrumento, formatDependenciaNa
 import * as XLSX from 'xlsx'
 import { usePermisos } from '@/lib/hooks/usePermisos'
 import { ExcelExportButton } from '@/components/seguimientos/ExcelExportButton'
-import { PendingSignaturesAlert, ReportProcessData } from '@/components/seguimientos/PendingSignaturesAlert'
+import { PendingSignaturesAlert } from '@/components/seguimientos/PendingSignaturesAlert'
+import type { ReportProcessData } from '@/components/seguimientos/PendingSignaturesAlert'
 
 // ─── Period generation based on instrument frequency ───────────────────────
 function getPeriodsForFrecuencia(frecuencia: FrecuenciaInstrumento): string[] {
@@ -65,7 +66,7 @@ export default function SeguimientosPage() {
     const { vigenciaActual } = useVigenciaStore()
     const { puedeEditar, esAdmin, esEquipoPlaneacion } = usePermisos()
     const hasModuleEditPerm = puedeEditar('seguimientos')
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
 
     // Data
     const [dependencias, setDependencias] = useState<Dependencia[]>([])
@@ -229,7 +230,7 @@ export default function SeguimientosPage() {
         }
 
         const data = visibleDependencias.map(dep => {
-            const row: any = {
+            const row: Record<string, string | number> = {
                 'ID': dep.id,
                 'DEPENDENCIA / OFICINA': formatDependenciaName(dep.nombre)
             }
@@ -276,12 +277,28 @@ export default function SeguimientosPage() {
                 segObj[key] = estado === 'verde' ? '√' : estado === 'rojo' ? 'X' : estado === 'amarillo' ? 'Pendiente Firma' : '';
             });
 
+            // Calcular SUMA para avance físico e inversión (acumulativo anual 0-100)
+            let totalFisico = 0;
+            let totalFinanciero = 0;
+
+            periods.forEach(p => {
+                const seg = getSeguimiento(dep.id, p);
+                if (seg) {
+                    totalFisico += (seg.porcentaje_fisico || 0);
+                    totalFinanciero += (seg.porcentaje_financiero || 0);
+                }
+            });
+
+            // Usamos la suma directamente, limitada al 100% (1.0 en decimal para Excel)
+            const finalFisico = Math.min(100, totalFisico);
+            const finalFinanciero = Math.min(100, totalFinanciero);
+
             return {
-                concepto: currentInstrumento.nombre,
+                concepto: currentInstrumento?.nombre || 'PLAN DE ACCIÓN',
                 proceso: formatDependenciaName(dep.nombre),
                 seguimiento: segObj,
-                avanceFisico: 0, // Como la web no visualiza este field para PAI a este nivel, enviamos un default
-                avanceInversion: 0
+                avanceFisico: finalFisico / 100, // Decimal para Excel %
+                avanceInversion: finalFinanciero / 100
             };
         });
     }, [isPlanAccion, visibleDependencias, seguimientosMap, periods, currentInstrumento]);
@@ -306,7 +323,7 @@ export default function SeguimientosPage() {
                         Mesa de Control
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Instrumentos de Planeación — Vigencia <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual.anio}</span>
+                        Instrumentos de Planeación — Vigencia <span className="text-blue-600 dark:text-blue-400 font-semibold">{vigenciaActual?.anio || '—'}</span>
                     </p>
                 </div>
                 <div className="flex gap-2 items-center">
@@ -323,7 +340,7 @@ export default function SeguimientosPage() {
                                     Ver Export Demo
                                 </Link>
                             </Button>
-                            <ExcelExportButton reportData={reportDataForExport} year={vigenciaActual.anio} className="hidden md:flex" />
+                            <ExcelExportButton reportData={reportDataForExport} year={vigenciaActual?.anio} className="hidden md:flex" />
                         </>
                     ) : (
                         <Button 
@@ -507,7 +524,7 @@ export default function SeguimientosPage() {
                 <SeguimientoDialog
                     open={dialogOpen}
                     onOpenChange={setDialogOpen}
-                    vigenciaId={vigenciaActual.id}
+                    vigenciaId={vigenciaActual?.id || ''}
                     dependencia={selectedCell.dependencia}
                     instrumento={currentInstrumento!}
                     periodo={selectedCell.periodo}

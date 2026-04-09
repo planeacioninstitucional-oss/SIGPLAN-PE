@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState } from 'react'
-import { ReportProcessData, PendingSignaturesAlert } from '@/components/seguimientos/PendingSignaturesAlert'
+import { PendingSignaturesAlert } from '@/components/seguimientos/PendingSignaturesAlert'
+import type { ReportProcessData } from '@/components/seguimientos/PendingSignaturesAlert'
 import { ExcelExportButton } from '@/components/seguimientos/ExcelExportButton'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
