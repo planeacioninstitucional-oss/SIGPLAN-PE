@@ -43,18 +43,18 @@ interface DependencyStats {
 }
 
 // ─── Componente auxiliar: KPI Card ───────────────────────────────────────────
-function KpiCard({ title, value, subtitle, icon: Icon, color = 'text-foreground dark:text-white' }: {
+function KpiCard({ title, value, subtitle, icon: Icon, color = 'text-slate-900 dark:text-white' }: {
     title: string, value: string | number, subtitle: string, icon: any, color?: string
 }) {
     return (
-        <Card className="card-glass border-border hover:border-primary/30 transition-all duration-300">
+        <Card className="card-glass border-border bg-white/50 dark:bg-slate-900/10 hover:border-primary/30 transition-all duration-300 shadow-sm">
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+                <CardTitle className="text-sm font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-tight">{title}</CardTitle>
                 <Icon className={`h-4 w-4 ${color}`} />
             </CardHeader>
             <CardContent>
                 <div className={`text-2xl font-bold ${color}`}>{value}</div>
-                <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+                <p className="text-xs text-slate-500 dark:text-muted-foreground mt-1 font-medium">{subtitle}</p>
             </CardContent>
         </Card>
     )
@@ -64,7 +64,7 @@ function KpiCard({ title, value, subtitle, icon: Icon, color = 'text-foreground 
 function ProgressBar({ value, max = 100, color = '#22c55e' }: { value: number, max?: number, color?: string }) {
     const pct = Math.min((value / max) * 100, 100)
     return (
-        <div className="w-full bg-slate-700/50 rounded-full h-2.5">
+        <div className="w-full bg-slate-200 dark:bg-slate-700/50 rounded-full h-2.5">
             <div
                 className="h-2.5 rounded-full transition-all duration-500"
                 style={{ width: `${pct}%`, backgroundColor: color }}
@@ -77,10 +77,10 @@ function ProgressBar({ value, max = 100, color = '#22c55e' }: { value: number, m
 function CustomTooltip({ active, payload, label }: any) {
     if (!active || !payload) return null
     return (
-        <div className="bg-slate-900/95 border border-slate-700 rounded-lg px-4 py-3 shadow-xl">
-            <p className="text-sm font-semibold text-white mb-1">{label}</p>
+        <div className="bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 shadow-xl">
+            <p className="text-sm font-bold text-slate-900 dark:text-white mb-1">{label}</p>
             {payload.map((entry: any, i: number) => (
-                <p key={i} className="text-xs" style={{ color: entry.fill || entry.color }}>
+                <p key={i} className="text-xs font-medium" style={{ color: entry.fill || entry.color }}>
                     {entry.name}: <span className="font-bold">{entry.value}</span>
                 </p>
             ))}
@@ -310,14 +310,14 @@ export default function ReportesPage() {
 
             {/* ─── Resumen Ejecutivo Automático ────────────────────────────── */}
             {autoSummary && (
-                <Card className="card-glass border-blue-500/30 bg-gradient-to-br from-blue-950/20 to-indigo-950/20">
+                <Card className="card-glass border-blue-500/30 bg-blue-50/50 dark:bg-blue-950/20">
                     <CardHeader>
                         <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center text-blue-200">
-                                <FileText className="mr-2 h-5 w-5 text-blue-400" />
+                            <CardTitle className="flex items-center text-blue-700 dark:text-blue-200">
+                                <FileText className="mr-2 h-5 w-5 text-blue-600 dark:text-blue-400" />
                                 Resumen Ejecutivo
                             </CardTitle>
-                            <Badge className={`${autoSummary.nivelColor} border-current bg-transparent`}>
+                            <Badge className={`${autoSummary.nivelColor} border-current bg-transparent font-bold`}>
                                 {autoSummary.nivel}
                             </Badge>
                         </div>
@@ -325,66 +325,68 @@ export default function ReportesPage() {
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                             {/* Cumplimiento */}
-                            <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-700/50">
-                                <p className="text-slate-400 font-medium mb-2">📊 Estado de Cumplimiento</p>
+                            <div className="bg-white/60 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                                <p className="text-slate-600 dark:text-slate-400 font-bold mb-2 uppercase text-[10px] tracking-wider">📊 Estado de Cumplimiento</p>
                                 <div className="space-y-1.5">
                                     <div className="flex justify-between">
-                                        <span className="text-green-400">Cumplidos</span>
-                                        <span className="font-bold text-green-400">{stats.verde} ({autoSummary.pctVerde}%)</span>
+                                        <span className="text-green-600 dark:text-green-400 font-medium">Cumplidos</span>
+                                        <span className="font-bold text-green-600 dark:text-green-400">{stats.verde} ({autoSummary.pctVerde}%)</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-yellow-400">En alerta</span>
-                                        <span className="font-bold text-yellow-400">{stats.amarillo} ({autoSummary.pctAmarillo}%)</span>
+                                        <span className="text-yellow-600 dark:text-yellow-400 font-medium">En alerta</span>
+                                        <span className="font-bold text-yellow-600 dark:text-yellow-400">{stats.amarillo} ({autoSummary.pctAmarillo}%)</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-red-400">Críticos</span>
-                                        <span className="font-bold text-red-400">{stats.rojo} ({autoSummary.pctRojo}%)</span>
+                                        <span className="text-red-600 dark:text-red-400 font-medium">Críticos</span>
+                                        <span className="font-bold text-red-600 dark:text-red-400">{stats.rojo} ({autoSummary.pctRojo}%)</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Top Dependencias */}
-                            <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-700/50">
-                                <p className="text-slate-400 font-medium mb-2">🏆 Mejor Desempeño</p>
-                                <ul className="space-y-1 text-slate-300">
+                            <div className="bg-white/60 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                                <p className="text-slate-600 dark:text-slate-400 font-bold mb-2 uppercase text-[10px] tracking-wider">🏆 Mejor Desempeño</p>
+                                <ul className="space-y-1 text-slate-700 dark:text-slate-300">
                                     {autoSummary.topDeps.map((name, i) => (
                                         <li key={i} className="flex items-center gap-2 text-xs">
                                             <span>{i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
-                                            <span className="truncate">{name}</span>
+                                            <span className="truncate font-medium">{name}</span>
                                         </li>
                                     ))}
                                 </ul>
                             </div>
 
                             {/* Alertas */}
-                            <div className="bg-slate-800/40 rounded-lg p-4 border border-slate-700/50">
-                                <p className="text-slate-400 font-medium mb-2">⚠️ Alertas Críticas</p>
+                            <div className="bg-white/60 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200 dark:border-slate-700/50 shadow-sm">
+                                <p className="text-slate-600 dark:text-slate-400 font-bold mb-2 uppercase text-[10px] tracking-wider">⚠️ Alertas Críticas</p>
                                 {autoSummary.criticalDeps.length > 0 ? (
-                                    <ul className="space-y-1 text-slate-300">
+                                    <ul className="space-y-1 text-slate-700 dark:text-slate-300">
                                         {autoSummary.criticalDeps.map((dep, i) => (
-                                            <li key={i} className="text-xs flex justify-between">
-                                                <span className="truncate">{dep.name}</span>
-                                                <Badge variant="outline" className="text-red-400 border-red-500/50 text-[10px] ml-1">
+                                            <li key={i} className="text-xs flex justify-between items-center">
+                                                <span className="truncate font-medium">{dep.name}</span>
+                                                <Badge variant="outline" className="text-red-600 dark:text-red-400 border-red-500/50 text-[10px] ml-1 px-1 h-4">
                                                     {dep.rojo} rojo{dep.rojo > 1 ? 's' : ''}
                                                 </Badge>
                                             </li>
                                         ))}
                                     </ul>
                                 ) : (
-                                    <p className="text-green-400 text-xs">✅ Sin alertas críticas</p>
+                                    <p className="text-green-600 dark:text-green-400 text-xs font-bold">✅ Sin alertas críticas</p>
                                 )}
                             </div>
                         </div>
 
                         {/* Recomendaciones automáticas */}
                         {autoSummary.lowPerformers.length > 0 && (
-                            <div className="bg-amber-950/20 border border-amber-500/30 rounded-lg p-4 mt-2">
-                                <p className="text-amber-400 font-medium text-sm mb-2">💡 Recomendaciones</p>
-                                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-500/30 rounded-lg p-4 mt-2">
+                                <p className="text-amber-700 dark:text-amber-400 font-bold text-sm mb-2 flex items-center gap-2">
+                                    <Activity className="h-4 w-4" /> Recomendaciones
+                                </p>
+                                <ul className="text-xs text-slate-700 dark:text-slate-300 space-y-1 list-disc list-inside">
                                     {autoSummary.lowPerformers.slice(0, 3).map((dep, i) => (
                                         <li key={i}>
-                                            <span className="font-medium">{dep.name}</span> presenta un score de{' '}
-                                            <span className="text-red-400 font-bold">{dep.score.toFixed(0)}/100</span>.
+                                            <span className="font-bold">{dep.name}</span> presenta un score de{' '}
+                                            <span className="text-red-600 dark:text-red-400 font-extrabold">{dep.score.toFixed(0)}/100</span>.
                                             Se recomienda priorizar la revisión de sus {dep.rojo} reporte(s) en estado crítico.
                                         </li>
                                     ))}
@@ -454,7 +456,7 @@ export default function ReportesPage() {
                         <CardTitle className="text-foreground dark:text-slate-200 text-base">Estado General</CardTitle>
                         <CardDescription>Distribución de cumplimiento</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[280px]">
+                    <CardContent className="h-[280px] bg-white/40 dark:bg-transparent rounded-b-lg">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -484,16 +486,17 @@ export default function ReportesPage() {
                         <CardTitle className="text-foreground dark:text-slate-200 text-base">Desempeño por Dependencia</CardTitle>
                         <CardDescription>Estado semáforo apilado (Top 10)</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[280px]">
+                    <CardContent className="h-[280px] bg-white/40 dark:bg-transparent rounded-b-lg">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={stackedBarData} layout="vertical" margin={{ left: 10, right: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" className="dark:stroke-[#334155]" />
+                                <XAxis type="number" tick={{ fill: '#64748b', fontSize: 12 }} />
                                 <YAxis
                                     type="category"
                                     dataKey="name"
                                     width={150}
-                                    tick={{ fill: '#cbd5e1', fontSize: 11 }}
+                                    tick={{ fill: '#475569', fontSize: 11 }}
+                                    className="dark:fill-[#cbd5e1]"
                                 />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Legend />
@@ -549,15 +552,15 @@ export default function ReportesPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="border-border">
-                                    <TableHead className="text-foreground dark:text-slate-300">#</TableHead>
-                                    <TableHead className="text-foreground dark:text-slate-300">Dependencia</TableHead>
-                                    <TableHead className="text-right text-foreground dark:text-slate-300">Total</TableHead>
-                                    <TableHead className="text-right text-green-400">Verdes</TableHead>
-                                    <TableHead className="text-right text-yellow-400">Amarillos</TableHead>
-                                    <TableHead className="text-right text-red-400">Rojos</TableHead>
-                                    <TableHead className="text-right text-foreground dark:text-slate-300">Avance Físico</TableHead>
-                                    <TableHead className="text-right text-foreground dark:text-slate-300">Avance Financiero</TableHead>
-                                    <TableHead className="text-right text-foreground dark:text-slate-300">Score</TableHead>
+                                    <TableHead className="text-slate-900 dark:text-slate-300 font-bold">#</TableHead>
+                                    <TableHead className="text-slate-900 dark:text-slate-300 font-bold">Dependencia</TableHead>
+                                    <TableHead className="text-right text-slate-900 dark:text-slate-300 font-bold">Total</TableHead>
+                                    <TableHead className="text-right text-green-600 dark:text-green-400 font-bold">Verdes</TableHead>
+                                    <TableHead className="text-right text-yellow-600 dark:text-yellow-400 font-bold">Amarillos</TableHead>
+                                    <TableHead className="text-right text-red-600 dark:text-red-400 font-bold">Rojos</TableHead>
+                                    <TableHead className="text-right text-slate-900 dark:text-slate-300 font-bold">Avance Físico</TableHead>
+                                    <TableHead className="text-right text-slate-900 dark:text-slate-300 font-bold">Avance Financiero</TableHead>
+                                    <TableHead className="text-right text-slate-900 dark:text-slate-300 font-bold">Score</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
