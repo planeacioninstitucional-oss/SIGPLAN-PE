@@ -168,15 +168,18 @@ export function ExcelExportButton({ reportData, className = "", year = new Date(
                     cell.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} }
                     cell.alignment = { vertical: 'middle', horizontal: 'center' }
 
-                    // Color de estado
+                    // Color de estado (Colores de fondo rellenos)
                     if (c >= 3 && c <= 14) {
                         const val = cell.value?.toString() || ''
                         if (val === '√' || val.toLowerCase() === 'cumplido') {
-                            cell.font = { color: { argb: 'FF00B050' }, bold: true }
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00B050' } }
+                            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
                         } else if (val === 'X' || val.toLowerCase() === 'no cumplido') {
-                            cell.font = { color: { argb: 'FFFF0000' }, bold: true }
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }
+                            cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
                         } else if (val.includes('Firma')) {
-                            cell.font = { color: { argb: 'FFD97706' }, bold: true } // Amber/Orange
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } }
+                            cell.font = { color: { argb: 'FF000000' }, bold: true, size: 11 } // Negro resaltado
                         }
                     }
 
