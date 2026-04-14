@@ -269,36 +269,40 @@ export default function SeguimientosPage() {
         if (!isPlanAccion || visibleDependencias.length === 0) return [];
         return visibleDependencias.map(dep => {
             const segObj: Record<string, string> = {};
+            const obsOficina: Record<string, string> = {};
+            const obsPlaneacion: Record<string, string> = {};
+
             periods.forEach(p => {
                 const seg = getSeguimiento(dep.id, p);
                 const key = p.toLowerCase().split(' ')[0]; // E.g., 'enero', 'febrero', etc.
                 const estado = seg ? seg.estado_semaforo : 'gris';
-                // Usamos 'Pendiente Firma' para los que están en amarillo, según el estándar del panel avanzado.
-                segObj[key] = estado === 'verde' ? '√' : estado === 'rojo' ? 'X' : estado === 'amarillo' ? 'Pendiente Firma' : '';
+                // Usamos '*** En revisión ***' para los que están en amarillo, según el estándar del panel avanzado.
+                segObj[key] = estado === 'verde' ? '√' : estado === 'rojo' ? 'X' : estado === 'amarillo' ? '*** En revisión ***' : '';
+                
+                if (seg?.observacion_oficina) obsOficina[key] = seg.observacion_oficina;
+                if (seg?.observacion_planeacion) obsPlaneacion[key] = seg.observacion_planeacion;
             });
 
-            // Calcular SUMA para avance físico e inversión (acumulativo anual 0-100)
-            let totalFisico = 0;
-            let totalFinanciero = 0;
+            // Encontrar el seguimiento más reciente (por fecha de modificación)
+            const depSegs = periods
+                .map(p => getSeguimiento(dep.id, p))
+                .filter((s): s is Seguimiento => s !== null);
+            
+            const latestSeg = [...depSegs].sort((a, b) => 
+                new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime()
+            )[0];
 
-            periods.forEach(p => {
-                const seg = getSeguimiento(dep.id, p);
-                if (seg) {
-                    totalFisico += (seg.porcentaje_fisico || 0);
-                    totalFinanciero += (seg.porcentaje_financiero || 0);
-                }
-            });
-
-            // Usamos la suma directamente, limitada al 100% (1.0 en decimal para Excel)
-            const finalFisico = Math.min(100, totalFisico);
-            const finalFinanciero = Math.min(100, totalFinanciero);
+            const finalFisico = latestSeg ? (latestSeg.porcentaje_fisico || 0) : 0;
+            const finalFinanciero = latestSeg ? (latestSeg.porcentaje_financiero || 0) : 0;
 
             return {
                 concepto: currentInstrumento?.nombre || 'PLAN DE ACCIÓN',
                 proceso: formatDependenciaName(dep.nombre),
                 seguimiento: segObj,
                 avanceFisico: finalFisico / 100, // Decimal para Excel %
-                avanceInversion: finalFinanciero / 100
+                avanceInversion: finalFinanciero / 100,
+                observacionesOficina: obsOficina,
+                observacionesPlaneacion: obsPlaneacion
             };
         });
     }, [isPlanAccion, visibleDependencias, seguimientosMap, periods, currentInstrumento]);

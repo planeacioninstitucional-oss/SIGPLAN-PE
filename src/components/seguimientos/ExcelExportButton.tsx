@@ -131,8 +131,8 @@ export function ExcelExportButton({ reportData, className = "", year = new Date(
             for (let i = 3; i <= 14; i++) sheet.getColumn(i).width = 12
             sheet.getColumn(15).width = 16
             sheet.getColumn(16).width = 18
-            sheet.getColumn(15).numFmt = '0%'
-            sheet.getColumn(16).numFmt = '0%'
+            sheet.getColumn(15).numFmt = '0.00%'
+            sheet.getColumn(16).numFmt = '0.00%'
 
             // 5. Filas de Procesos
             let currentRow = 5
@@ -153,7 +153,7 @@ export function ExcelExportButton({ reportData, className = "", year = new Date(
                 for (const m of mesesMap) {
                     const status = procData ? (procData.seguimiento[m] || '') : ''
                     rowBuffer.push(status as ExcelJS.CellValue)
-                    if (status.includes('Pendiente Firma') || status.includes('Firma')) hasPendiente = true
+                    if (status.includes('*** En revisión ***') || status.includes('revisión')) hasPendiente = true
                 }
                 
                 if (hasPendiente) procesosPendientes.push(nombreProceso)
@@ -180,15 +180,15 @@ export function ExcelExportButton({ reportData, className = "", year = new Date(
                         } else if (val === 'X' || val.toLowerCase() === 'no cumplido') {
                             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }
                             cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
-                        } else if (val.includes('Firma')) {
+                        } else if (val.includes('revisión')) {
                             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF00' } }
-                            cell.font = { color: { argb: 'FF000000' }, bold: true, size: 11 } // Negro resaltado
+                            cell.font = { color: { argb: 'FF000000' }, bold: true, size: 9 } // Negro resaltado
                         }
                     }
 
                     // Formato de porcentaje
                     if (c === 15 || c === 16) {
-                        cell.numFmt = '0%'
+                        cell.numFmt = '0.00%'
                         cell.font = { color: { argb: 'FF0000FF' }, bold: true } // Azul para que resalte
                     }
                 }
@@ -229,6 +229,75 @@ export function ExcelExportButton({ reportData, className = "", year = new Date(
                 c.value = 'Todos los procesos están al día.'
                 c.font = { bold: true, color: { argb: 'FF008000' } }
                 c.border = { top:{style:'thin',color:{argb:'FFFF0000'}}, left:{style:'medium',color:{argb:'FFFF0000'}}, bottom:{style:'medium',color:{argb:'FFFF0000'}}, right:{style:'medium',color:{argb:'FFFF0000'}} }
+            }
+
+            // -------------------------------------------------------------------------
+            // 7. NUEVA HOJA: DETALLE DE OBSERVACIONES
+            // -------------------------------------------------------------------------
+            const obsSheet = workbook.addWorksheet('Observaciones', {
+                pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true }
+            })
+
+            // Encabezado de la hoja de observaciones
+            obsSheet.mergeCells('A1:D1')
+            const obsTitleCell = obsSheet.getCell('A1')
+            obsTitleCell.value = 'DETALLE DE OBSERVACIONES Y COMENTARIOS POR PERIODO'
+            obsTitleCell.font = { name: 'Arial', size: 14, bold: true }
+            obsTitleCell.alignment = { vertical: 'middle', horizontal: 'center' }
+
+            const obsHeaderRow = obsSheet.getRow(3)
+            const obsCols = ['PROCESO', 'PERIODO', 'OBSERVACIÓN OFICINA', 'OBSERVACIÓN EVALUADOR (PLANEACIÓN)']
+            
+            obsCols.forEach((colTitle, i) => {
+                const cell = obsHeaderRow.getCell(i + 1)
+                cell.value = colTitle
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FF4F81BD' } // Azul Institucional
+                }
+                cell.font = { color: { argb: 'FFFFFFFF' }, bold: true }
+                cell.alignment = { horizontal: 'center', vertical: 'middle' }
+                cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
+            })
+
+            // Anchos de columna para observaciones
+            obsSheet.getColumn(1).width = 40
+            obsSheet.getColumn(2).width = 15
+            obsSheet.getColumn(3).width = 60
+            obsSheet.getColumn(4).width = 60
+
+            let obsCurrentRow = 4
+            reportData.forEach(proc => {
+                mesesMap.forEach(m => {
+                    const obsOfi = proc.observacionesOficina?.[m]
+                    const obsPlan = proc.observacionesPlaneacion?.[m]
+                    
+                    if (obsOfi || obsPlan) {
+                        const row = obsSheet.getRow(obsCurrentRow)
+                        row.values = [
+                            proc.proceso, 
+                            m.toUpperCase(), 
+                            obsOfi || 'Sin observaciones', 
+                            obsPlan || 'Sin observaciones'
+                        ]
+                        
+                        // Estilos para la fila de observaciones
+                        for (let i = 1; i <= 4; i++) {
+                            const cell = row.getCell(i)
+                            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } }
+                            cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true }
+                            if (i === 2) cell.alignment = { horizontal: 'center', vertical: 'top' }
+                        }
+                        obsCurrentRow++
+                    }
+                })
+            })
+
+            if (obsCurrentRow === 4) {
+                obsSheet.getCell('A4').value = 'No se encontraron observaciones registradas en este periodo.'
+                obsSheet.mergeCells('A4:D4')
+                obsSheet.getCell('A4').alignment = { horizontal: 'center' }
             }
 
             // Guardar archivo

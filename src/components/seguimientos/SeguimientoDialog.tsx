@@ -109,8 +109,8 @@ export function SeguimientoDialog({
             setFormData({
                 estado_semaforo: seguimientoExistente.estado_semaforo,
                 url_evidencia: seguimientoExistente.url_evidencia || '',
-                porcentaje_fisico: seguimientoExistente.porcentaje_fisico?.toString() || '',
-                porcentaje_financiero: seguimientoExistente.porcentaje_financiero?.toString() || '',
+                porcentaje_fisico: seguimientoExistente.porcentaje_fisico?.toString().replace('.', ',') || '',
+                porcentaje_financiero: seguimientoExistente.porcentaje_financiero?.toString().replace('.', ',') || '',
                 hubo_materializacion_riesgo: seguimientoExistente.hubo_materializacion_riesgo || false,
                 url_saro: seguimientoExistente.url_saro || '',
                 observacion_oficina: seguimientoExistente.observacion_oficina || '',
@@ -148,11 +148,12 @@ export function SeguimientoDialog({
             // Oficina fields
             if (canEditOficina) {
                 // Validación de porcentajes (0-100) para evitar error de constraint en base de datos
-                const pFisico = formData.porcentaje_fisico ? parseFloat(formData.porcentaje_fisico) : null
-                const pFinanciero = formData.porcentaje_financiero ? parseFloat(formData.porcentaje_financiero) : null
+                // Validación de porcentajes (decimale + coma)
+                const pFisico = formData.porcentaje_fisico ? parseFloat(formData.porcentaje_fisico.replace(',', '.')) : null
+                const pFinanciero = formData.porcentaje_financiero ? parseFloat(formData.porcentaje_financiero.replace(',', '.')) : null
                 
-                payload.porcentaje_fisico = pFisico !== null ? Math.min(100, Math.max(0, pFisico)) : null
-                payload.porcentaje_financiero = pFinanciero !== null ? Math.min(100, Math.max(0, pFinanciero)) : null
+                payload.porcentaje_fisico = pFisico
+                payload.porcentaje_financiero = pFinanciero
                 payload.hubo_materializacion_riesgo = formData.hubo_materializacion_riesgo
                 payload.url_saro = formData.url_saro || null
                 payload.subido_por = userId
@@ -304,35 +305,27 @@ export function SeguimientoDialog({
                                     <Label htmlFor="fisico">% Avance Físico</Label>
                                     <Input
                                         id="fisico"
-                                        type="number"
-                                        min="0"
-                                        max="100"
+                                        placeholder="ej: 8,34"
                                         value={formData.porcentaje_fisico}
                                         onChange={(e) => {
-                                            const val = parseInt(e.target.value);
-                                            if (isNaN(val)) setFormData({ ...formData, porcentaje_fisico: '' });
-                                            else setFormData({ ...formData, porcentaje_fisico: Math.min(100, Math.max(0, val)).toString() });
+                                            setFormData({ ...formData, porcentaje_fisico: e.target.value.replace('%', '') });
                                         }}
                                         disabled={!canEditOficina}
                                     />
-                                    <p className="text-[10px] text-muted-foreground">Escala 0-100%</p>
+                                    <p className="text-[10px] text-muted-foreground">Ejemplo: 8,34 o 15</p>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label htmlFor="financiero">% Avance Financiero</Label>
                                     <Input
                                         id="financiero"
-                                        type="number"
-                                        min="0"
-                                        max="100"
+                                        placeholder="ej: 25,8"
                                         value={formData.porcentaje_financiero}
                                         onChange={(e) => {
-                                            const val = parseInt(e.target.value);
-                                            if (isNaN(val)) setFormData({ ...formData, porcentaje_financiero: '' });
-                                            else setFormData({ ...formData, porcentaje_financiero: Math.min(100, Math.max(0, val)).toString() });
+                                            setFormData({ ...formData, porcentaje_financiero: e.target.value.replace('%', '') });
                                         }}
                                         disabled={!canEditOficina}
                                     />
-                                    <p className="text-[10px] text-muted-foreground">Escala 0-100%</p>
+                                    <p className="text-[10px] text-muted-foreground">Ejemplo: 25,8 o 30</p>
                                 </div>
                             </div>
                         )}

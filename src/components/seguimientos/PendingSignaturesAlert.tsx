@@ -24,6 +24,8 @@ export interface ReportProcessData {
     seguimiento: SeguimientoMensual
     avanceFisico: number
     avanceInversion: number
+    observacionesOficina?: SeguimientoMensual
+    observacionesPlaneacion?: SeguimientoMensual
 }
 
 interface PendingSignaturesAlertProps {
@@ -36,7 +38,7 @@ export function PendingSignaturesAlert({ reportData }: PendingSignaturesAlertPro
     // Contar cuántos procesos tienen al menos un mes "Pendiente Firma"
     const pendingCount = reportData.filter(proc => {
         const seg = proc.seguimiento
-        return Object.values(seg).some(val => val === "Pendiente Firma")
+        return Object.values(seg).some(val => val === "*** En revisión ***")
     }).length
 
     if (pendingCount === 0) return null
